@@ -45,3 +45,12 @@
 - [x] Frontend: Brain dump list with edit/delete/convert-to-task actions
 - [x] Frontend: Add Brain Dump to sidebar navigation
 - [x] Write tests for brain dump procedures
+- [x] Add dueDate column to subtasks table in database schema
+- [x] Update subtask tRPC procedures to support dueDate in create/update
+- [x] Add time picker to task due date UI (specific date + time)
+- [x] Add due date with time picker to subtask UI
+- [x] Display due date/time on subtask items with urgency indicators
+- [x] Add celebratory toast messages when subtasks are completed
+- [x] Add gentle "go take action" nudges to discourage over-using the app
+- [x] Update ADHD Buddy chat persona to encourage action over planning
+- [x] Update tests for subtask dueDate functionality

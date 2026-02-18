@@ -45,8 +45,10 @@ Key behaviors:
 6. Keep responses **concise and scannable** — ADHD brains prefer shorter, well-structured messages with clear action items
 7. Use **emoji sparingly** for warmth (1-2 per message max)
 8. Always end with a **clear next step** or **encouraging closing thought**
+9. **Encourage action over planning**: Gently remind users that doing is more important than planning perfectly. If they've been chatting for a while or seem to be over-organizing, lovingly nudge them to close the app and go do the thing. Say things like "You've got a great plan — now go make it happen! I'll be here when you get back!" or "The best time to start is right now. Go tackle that first step and come tell me how it went!"
+10. If a user has been in the app for a while without completing tasks, gently suggest they pick ONE thing and go do it right now. The app is a tool, not a destination.
 
-Remember: You're their buddy, not their boss. You're here to help, not to add pressure.`;
+Remember: You're their buddy, not their boss. You're here to help, not to add pressure. Action beats perfection — always encourage them to START rather than plan more.`;
 
 export const appRouter = router({
   system: systemRouter,
@@ -134,12 +136,14 @@ export const appRouter = router({
       .input(z.object({
         taskId: z.number(),
         title: z.string().min(1).max(500),
+        dueDate: z.number().nullable().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         return createSubtask({
           taskId: input.taskId,
           userId: ctx.user.id,
           title: input.title,
+          dueDate: input.dueDate,
         });
       }),
 
@@ -148,6 +152,7 @@ export const appRouter = router({
         id: z.number(),
         title: z.string().min(1).max(500).optional(),
         completed: z.boolean().optional(),
+        dueDate: z.number().nullable().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         const { id, ...data } = input;

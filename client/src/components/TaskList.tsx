@@ -36,6 +36,7 @@ interface TaskListProps {
       title: string;
       completed: boolean;
       sortOrder: number;
+      dueDate: number | null;
     }>;
   }>;
   onCelebrate: () => void;

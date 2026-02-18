@@ -228,6 +228,7 @@ export async function createSubtask(data: {
   taskId: number;
   userId: number;
   title: string;
+  dueDate?: number | null;
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -244,6 +245,7 @@ export async function createSubtask(data: {
     userId: data.userId,
     title: data.title,
     sortOrder: nextOrder,
+    dueDate: data.dueDate ?? null,
   });
 
   return { id: Number(result[0].insertId) };
@@ -252,12 +254,14 @@ export async function createSubtask(data: {
 export async function updateSubtask(subtaskId: number, userId: number, data: {
   title?: string;
   completed?: boolean;
+  dueDate?: number | null;
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
   const updateSet: Record<string, unknown> = {};
   if (data.title !== undefined) updateSet.title = data.title;
+  if (data.dueDate !== undefined) updateSet.dueDate = data.dueDate;
   if (data.completed !== undefined) {
     updateSet.completed = data.completed;
     updateSet.completedAt = data.completed ? new Date() : null;

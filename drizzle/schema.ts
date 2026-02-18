@@ -48,6 +48,7 @@ export const subtasks = mysqlTable("subtasks", {
   title: varchar("title", { length: 500 }).notNull(),
   completed: boolean("completed").notNull().default(false),
   sortOrder: int("sortOrder").notNull().default(0),
+  dueDate: bigint("dueDate", { mode: "number" }),
   completedAt: timestamp("completedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

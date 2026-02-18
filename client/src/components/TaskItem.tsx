@@ -53,35 +53,63 @@ interface TaskItemProps {
       title: string;
       completed: boolean;
       sortOrder: number;
+      dueDate: number | null;
     }>;
   };
   onComplete: (taskId: number, completed: boolean) => void;
   onCelebrate: () => void;
 }
 
-function getDueDateInfo(dueDate: number | null) {
+export function getDueDateInfo(dueDate: number | null) {
   if (!dueDate) return null;
   const due = new Date(dueDate);
   const now = new Date();
-  now.setHours(0, 0, 0, 0);
+  const diffMs = due.getTime() - now.getTime();
+  const diffMins = Math.round(diffMs / (1000 * 60));
+  const diffHours = Math.round(diffMs / (1000 * 60 * 60));
+
+  // Check if same calendar day
+  const nowDay = new Date(now);
+  nowDay.setHours(0, 0, 0, 0);
   const dueDay = new Date(due);
   dueDay.setHours(0, 0, 0, 0);
-  const diffMs = dueDay.getTime() - now.getTime();
-  const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+  const diffDays = Math.round((dueDay.getTime() - nowDay.getTime()) / (1000 * 60 * 60 * 24));
 
+  const hasTime = due.getHours() !== 23 || due.getMinutes() !== 59;
+  const timeStr = hasTime
+    ? due.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
+    : "";
   const dateStr = due.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  const fullLabel = timeStr ? `${dateStr} at ${timeStr}` : dateStr;
 
-  if (diffDays < 0) {
-    return { label: `Overdue (${dateStr})`, color: "text-red-600", bgColor: "bg-red-50 border-red-200", icon: AlertTriangle, urgency: "overdue" };
+  if (diffMs < 0) {
+    return { label: `Overdue (${fullLabel})`, color: "text-red-600", bgColor: "bg-red-50 border-red-200", icon: AlertTriangle, urgency: "overdue" as const };
+  } else if (diffDays === 0 && diffHours <= 2) {
+    return { label: `Due soon (${timeStr || "today"})`, color: "text-red-500", bgColor: "bg-red-50 border-red-200", icon: Clock, urgency: "overdue" as const };
   } else if (diffDays === 0) {
-    return { label: `Due today`, color: "text-orange-600", bgColor: "bg-orange-50 border-orange-200", icon: Clock, urgency: "today" };
+    return { label: `Due today${timeStr ? ` at ${timeStr}` : ""}`, color: "text-orange-600", bgColor: "bg-orange-50 border-orange-200", icon: Clock, urgency: "today" as const };
   } else if (diffDays === 1) {
-    return { label: `Due tomorrow`, color: "text-amber-600", bgColor: "bg-amber-50 border-amber-200", icon: Clock, urgency: "tomorrow" };
+    return { label: `Due tomorrow${timeStr ? ` at ${timeStr}` : ""}`, color: "text-amber-600", bgColor: "bg-amber-50 border-amber-200", icon: Clock, urgency: "tomorrow" as const };
   } else if (diffDays <= 3) {
-    return { label: `Due in ${diffDays} days`, color: "text-yellow-600", bgColor: "bg-yellow-50 border-yellow-200", icon: CalendarIcon, urgency: "soon" };
+    return { label: `Due in ${diffDays} days`, color: "text-yellow-600", bgColor: "bg-yellow-50 border-yellow-200", icon: CalendarIcon, urgency: "soon" as const };
   } else {
-    return { label: `Due ${dateStr}`, color: "text-muted-foreground", bgColor: "bg-muted/50 border-border", icon: CalendarIcon, urgency: "later" };
+    return { label: `Due ${fullLabel}`, color: "text-muted-foreground", bgColor: "bg-muted/50 border-border", icon: CalendarIcon, urgency: "later" as const };
   }
+}
+
+function TimeInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  return (
+    <div className="flex items-center gap-2 px-3 py-2 border-t">
+      <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
+      <span className="text-xs text-muted-foreground shrink-0">Time:</span>
+      <Input
+        type="time"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="h-8 text-sm flex-1"
+      />
+    </div>
+  );
 }
 
 export function TaskItem({ task, onComplete, onCelebrate }: TaskItemProps) {
@@ -91,6 +119,15 @@ export function TaskItem({ task, onComplete, onCelebrate }: TaskItemProps) {
   const [newSubtask, setNewSubtask] = useState("");
   const [showAddSubtask, setShowAddSubtask] = useState(false);
   const [datePickerOpen, setDatePickerOpen] = useState(false);
+  const [selectedTime, setSelectedTime] = useState(() => {
+    if (task.dueDate) {
+      const d = new Date(task.dueDate);
+      if (d.getHours() !== 23 || d.getMinutes() !== 59) {
+        return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+      }
+    }
+    return "";
+  });
 
   const utils = trpc.useUtils();
 
@@ -176,12 +213,31 @@ export function TaskItem({ task, onComplete, onCelebrate }: TaskItemProps) {
   const handleSetDueDate = (date: Date | undefined) => {
     if (date) {
       const d = new Date(date);
-      d.setHours(23, 59, 59, 999);
+      if (selectedTime) {
+        const [h, m] = selectedTime.split(":").map(Number);
+        d.setHours(h, m, 0, 0);
+      } else {
+        d.setHours(23, 59, 59, 999);
+      }
       updateTask.mutate({ id: task.id, dueDate: d.getTime() });
     } else {
       updateTask.mutate({ id: task.id, dueDate: null });
+      setSelectedTime("");
     }
-    setDatePickerOpen(false);
+  };
+
+  const handleTimeChange = (time: string) => {
+    setSelectedTime(time);
+    if (task.dueDate) {
+      const d = new Date(task.dueDate);
+      if (time) {
+        const [h, m] = time.split(":").map(Number);
+        d.setHours(h, m, 0, 0);
+      } else {
+        d.setHours(23, 59, 59, 999);
+      }
+      updateTask.mutate({ id: task.id, dueDate: d.getTime() });
+    }
   };
 
   const sensors = useSensors(
@@ -299,6 +355,7 @@ export function TaskItem({ task, onComplete, onCelebrate }: TaskItemProps) {
                           onSelect={handleSetDueDate}
                           initialFocus
                         />
+                        <TimeInput value={selectedTime} onChange={handleTimeChange} />
                         {task.dueDate && (
                           <div className="border-t px-3 py-2">
                             <Button
@@ -307,6 +364,7 @@ export function TaskItem({ task, onComplete, onCelebrate }: TaskItemProps) {
                               className="w-full text-xs text-muted-foreground"
                               onClick={() => {
                                 updateTask.mutate({ id: task.id, dueDate: null });
+                                setSelectedTime("");
                                 setDatePickerOpen(false);
                               }}
                             >

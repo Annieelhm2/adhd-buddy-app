@@ -271,6 +271,82 @@ describe("subtasks", () => {
       caller.subtasks.create({ taskId: 1, title: "Test" })
     ).rejects.toThrow();
   });
+
+  it("creates a subtask with a due date", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const task = await caller.tasks.create({ title: "Parent with subtask due", listType: "must_do" });
+    const tomorrow = Date.now() + 24 * 60 * 60 * 1000;
+    const subtask = await caller.subtasks.create({
+      taskId: task.id,
+      title: "Subtask with due date",
+      dueDate: tomorrow,
+    });
+
+    expect(subtask).toHaveProperty("id");
+
+    const tasks = await caller.tasks.list();
+    const parent = tasks.find((t) => t.id === task.id);
+    const sub = parent?.subtasks.find((s) => s.id === subtask.id);
+    expect(sub).toBeDefined();
+    expect(sub?.dueDate).toBe(tomorrow);
+  });
+
+  it("creates a subtask without a due date (null)", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const task = await caller.tasks.create({ title: "Parent no sub due", listType: "must_do" });
+    const subtask = await caller.subtasks.create({
+      taskId: task.id,
+      title: "Subtask no due date",
+    });
+
+    const tasks = await caller.tasks.list();
+    const parent = tasks.find((t) => t.id === task.id);
+    const sub = parent?.subtasks.find((s) => s.id === subtask.id);
+    expect(sub?.dueDate).toBeNull();
+  });
+
+  it("updates a subtask due date", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const task = await caller.tasks.create({ title: "Parent update sub due", listType: "must_do" });
+    const subtask = await caller.subtasks.create({
+      taskId: task.id,
+      title: "Update sub due date",
+    });
+
+    const nextWeek = Date.now() + 7 * 24 * 60 * 60 * 1000;
+    await caller.subtasks.update({ id: subtask.id, dueDate: nextWeek });
+
+    const tasks = await caller.tasks.list();
+    const parent = tasks.find((t) => t.id === task.id);
+    const sub = parent?.subtasks.find((s) => s.id === subtask.id);
+    expect(sub?.dueDate).toBe(nextWeek);
+  });
+
+  it("removes a subtask due date by setting null", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const tomorrow = Date.now() + 24 * 60 * 60 * 1000;
+    const task = await caller.tasks.create({ title: "Parent remove sub due", listType: "must_do" });
+    const subtask = await caller.subtasks.create({
+      taskId: task.id,
+      title: "Remove sub due date",
+      dueDate: tomorrow,
+    });
+
+    await caller.subtasks.update({ id: subtask.id, dueDate: null });
+
+    const tasks = await caller.tasks.list();
+    const parent = tasks.find((t) => t.id === task.id);
+    const sub = parent?.subtasks.find((s) => s.id === subtask.id);
+    expect(sub?.dueDate).toBeNull();
+  });
 });
 
 describe("tasks.reorder", () => {
