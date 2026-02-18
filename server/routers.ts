@@ -20,6 +20,11 @@ import {
   saveChatMessage,
   clearChatHistory,
   getUserStats,
+  getBrainDumps,
+  createBrainDump,
+  updateBrainDump,
+  deleteBrainDump,
+  convertBrainDumpToTask,
 } from "./db";
 import { invokeLLM } from "./_core/llm";
 
@@ -343,6 +348,54 @@ Use this context to provide personalized, relevant encouragement and advice. Ref
       await clearChatHistory(ctx.user.id);
       return { success: true };
     }),
+  }),
+
+  brainDump: router({
+    list: protectedProcedure.query(async ({ ctx }) => {
+      return getBrainDumps(ctx.user.id);
+    }),
+
+    create: protectedProcedure
+      .input(z.object({
+        content: z.string().min(1).max(5000),
+        color: z.string().max(20).optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        return createBrainDump({
+          userId: ctx.user.id,
+          content: input.content,
+          color: input.color,
+        });
+      }),
+
+    update: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        content: z.string().min(1).max(5000).optional(),
+        color: z.string().max(20).optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { id, ...data } = input;
+        await updateBrainDump(id, ctx.user.id, data);
+        return { success: true };
+      }),
+
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        await deleteBrainDump(input.id, ctx.user.id);
+        return { success: true };
+      }),
+
+    convertToTask: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        listType: z.enum(["must_do", "could_do"]),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const result = await convertBrainDumpToTask(input.id, ctx.user.id, input.listType);
+        return result;
+      }),
   }),
 
   stats: router({

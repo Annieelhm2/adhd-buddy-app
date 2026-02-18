@@ -1,6 +1,6 @@
-import { and, asc, desc, eq, sql } from "drizzle-orm";
+import { and, asc, desc, eq, isNull, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, tasks, subtasks, chatMessages, type Task, type Subtask } from "../drizzle/schema";
+import { InsertUser, users, tasks, subtasks, chatMessages, brainDumps, type Task, type Subtask } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -326,6 +326,92 @@ export async function clearChatHistory(userId: number) {
   if (!db) throw new Error("Database not available");
 
   await db.delete(chatMessages).where(eq(chatMessages.userId, userId));
+}
+
+// ==================== BRAIN DUMP QUERIES ====================
+
+export async function getBrainDumps(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return db
+    .select()
+    .from(brainDumps)
+    .where(and(eq(brainDumps.userId, userId), isNull(brainDumps.convertedToTaskId)))
+    .orderBy(desc(brainDumps.createdAt));
+}
+
+export async function createBrainDump(data: {
+  userId: number;
+  content: string;
+  color?: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.insert(brainDumps).values({
+    userId: data.userId,
+    content: data.content,
+    color: data.color ?? "default",
+  });
+
+  return { id: Number(result[0].insertId) };
+}
+
+export async function updateBrainDump(dumpId: number, userId: number, data: {
+  content?: string;
+  color?: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const updateSet: Record<string, unknown> = {};
+  if (data.content !== undefined) updateSet.content = data.content;
+  if (data.color !== undefined) updateSet.color = data.color;
+
+  if (Object.keys(updateSet).length === 0) return;
+
+  await db
+    .update(brainDumps)
+    .set(updateSet)
+    .where(and(eq(brainDumps.id, dumpId), eq(brainDumps.userId, userId)));
+}
+
+export async function deleteBrainDump(dumpId: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db.delete(brainDumps).where(and(eq(brainDumps.id, dumpId), eq(brainDumps.userId, userId)));
+}
+
+export async function convertBrainDumpToTask(dumpId: number, userId: number, listType: "must_do" | "could_do") {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Get the brain dump
+  const dumps = await db
+    .select()
+    .from(brainDumps)
+    .where(and(eq(brainDumps.id, dumpId), eq(brainDumps.userId, userId)))
+    .limit(1);
+
+  if (dumps.length === 0) throw new Error("Brain dump not found");
+  const dump = dumps[0];
+
+  // Create a task from it
+  const taskResult = await createTask({
+    userId,
+    title: dump.content.length > 200 ? dump.content.substring(0, 200) + "..." : dump.content,
+    listType,
+  });
+
+  // Mark the brain dump as converted
+  await db
+    .update(brainDumps)
+    .set({ convertedToTaskId: taskResult.id })
+    .where(eq(brainDumps.id, dumpId));
+
+  return taskResult;
 }
 
 // ==================== STATS QUERIES ====================

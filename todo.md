@@ -38,3 +38,10 @@
 - [x] Improve mobile UI: TaskItem and SubtaskItem touch-friendly sizing
 - [x] Improve mobile UI: Chat page mobile layout
 - [x] Improve mobile UI: Tasks page header and buddy character sizing
+- [x] Database schema: brain_dumps table for quick thought capture
+- [x] Server: tRPC procedures for brain dump CRUD
+- [x] Server: tRPC procedure to convert brain dump item into a task
+- [x] Frontend: Brain Dump page with quick capture input
+- [x] Frontend: Brain dump list with edit/delete/convert-to-task actions
+- [x] Frontend: Add Brain Dump to sidebar navigation
+- [x] Write tests for brain dump procedures

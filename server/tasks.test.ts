@@ -405,3 +405,150 @@ describe("chat", () => {
     await expect(caller.chat.messages()).rejects.toThrow();
   });
 });
+
+describe("brainDump", () => {
+  it("creates a brain dump", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const result = await caller.brainDump.create({
+      content: "Random thought about project",
+    });
+
+    expect(result).toHaveProperty("id");
+    expect(typeof result.id).toBe("number");
+  });
+
+  it("creates a brain dump with color", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const result = await caller.brainDump.create({
+      content: "Colored thought",
+      color: "yellow",
+    });
+
+    expect(result).toHaveProperty("id");
+
+    const dumps = await caller.brainDump.list();
+    const dump = dumps.find((d) => d.id === result.id);
+    expect(dump?.color).toBe("yellow");
+  });
+
+  it("lists brain dumps for authenticated user", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    await caller.brainDump.create({ content: "Dump 1" });
+    await caller.brainDump.create({ content: "Dump 2" });
+
+    const dumps = await caller.brainDump.list();
+    expect(Array.isArray(dumps)).toBe(true);
+    expect(dumps.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("updates a brain dump content", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const created = await caller.brainDump.create({ content: "Original thought" });
+
+    const result = await caller.brainDump.update({
+      id: created.id,
+      content: "Updated thought",
+    });
+
+    expect(result).toEqual({ success: true });
+
+    const dumps = await caller.brainDump.list();
+    const updated = dumps.find((d) => d.id === created.id);
+    expect(updated?.content).toBe("Updated thought");
+  });
+
+  it("updates a brain dump color", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const created = await caller.brainDump.create({ content: "Color change" });
+
+    await caller.brainDump.update({ id: created.id, color: "blue" });
+
+    const dumps = await caller.brainDump.list();
+    const updated = dumps.find((d) => d.id === created.id);
+    expect(updated?.color).toBe("blue");
+  });
+
+  it("deletes a brain dump", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const created = await caller.brainDump.create({ content: "Delete me" });
+
+    const result = await caller.brainDump.delete({ id: created.id });
+    expect(result).toEqual({ success: true });
+
+    const dumps = await caller.brainDump.list();
+    const deleted = dumps.find((d) => d.id === created.id);
+    expect(deleted).toBeUndefined();
+  });
+
+  it("converts a brain dump to a must_do task", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const created = await caller.brainDump.create({ content: "Convert to task" });
+
+    const result = await caller.brainDump.convertToTask({
+      id: created.id,
+      listType: "must_do",
+    });
+
+    expect(result).toHaveProperty("id");
+
+    // Brain dump should no longer appear in list (it's been converted)
+    const dumps = await caller.brainDump.list();
+    const converted = dumps.find((d) => d.id === created.id);
+    expect(converted).toBeUndefined();
+
+    // Task should exist
+    const tasks = await caller.tasks.list({ listType: "must_do" });
+    const task = tasks.find((t) => t.id === result.id);
+    expect(task).toBeDefined();
+    expect(task?.title).toBe("Convert to task");
+  });
+
+  it("converts a brain dump to a could_do task", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const created = await caller.brainDump.create({ content: "Maybe do this" });
+
+    const result = await caller.brainDump.convertToTask({
+      id: created.id,
+      listType: "could_do",
+    });
+
+    expect(result).toHaveProperty("id");
+
+    const tasks = await caller.tasks.list({ listType: "could_do" });
+    const task = tasks.find((t) => t.id === result.id);
+    expect(task).toBeDefined();
+    expect(task?.title).toBe("Maybe do this");
+  });
+
+  it("rejects empty content", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    await expect(
+      caller.brainDump.create({ content: "" })
+    ).rejects.toThrow();
+  });
+
+  it("rejects unauthenticated access", async () => {
+    const { ctx } = createUnauthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    await expect(caller.brainDump.list()).rejects.toThrow();
+  });
+});

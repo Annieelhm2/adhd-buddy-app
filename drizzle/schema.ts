@@ -69,3 +69,19 @@ export const chatMessages = mysqlTable("chatMessages", {
 
 export type ChatMessage = typeof chatMessages.$inferSelect;
 export type InsertChatMessage = typeof chatMessages.$inferInsert;
+
+/**
+ * Brain dumps table - quick thought capture without organization.
+ */
+export const brainDumps = mysqlTable("brainDumps", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  content: text("content").notNull(),
+  color: varchar("color", { length: 20 }).default("default"),
+  convertedToTaskId: int("convertedToTaskId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type BrainDump = typeof brainDumps.$inferSelect;
+export type InsertBrainDump = typeof brainDumps.$inferInsert;
