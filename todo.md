@@ -31,3 +31,4 @@
 - [x] Display due dates on task cards with urgency indicators
 - [x] Pass task/subtask/due date context to ADHD Buddy chat LLM
 - [x] Update tests for due date functionality
+- [x] Fix: Task action icons not visible on mobile (hover-only issue)
