@@ -129,7 +129,7 @@ export default function Chat() {
 
   const buddyMessage = useMemo(() => {
     if (sendMessage.isPending) return "Let me think about that...";
-    if (messages.length <= 1) return "Hey there! I'm your ADHD Buddy. How can I help you today?";
+    if (messages.length <= 1) return "Hey! How can I help you today?";
     return undefined;
   }, [sendMessage.isPending, messages.length]);
 
@@ -137,21 +137,21 @@ export default function Chat() {
     return (
       <div className="space-y-4 max-w-3xl mx-auto">
         <div className="flex justify-center">
-          <Skeleton className="h-24 w-24 rounded-full" />
+          <Skeleton className="h-20 w-20 sm:h-24 sm:w-24 rounded-full" />
         </div>
-        <Skeleton className="h-[500px] w-full rounded-xl" />
+        <Skeleton className="h-[400px] sm:h-[500px] w-full rounded-xl" />
       </div>
     );
   }
 
   return (
-    <div className="max-w-3xl mx-auto space-y-4">
+    <div className="max-w-3xl mx-auto space-y-3 sm:space-y-4">
       {/* Buddy with mood */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <BuddyCharacter mood={buddyMood} size={64} />
+          <BuddyCharacter mood={buddyMood} size={56} />
           {buddyMessage && (
-            <div className="bg-card border rounded-2xl px-3 py-2 text-sm font-medium shadow-sm max-w-[250px]">
+            <div className="bg-card border rounded-2xl px-3 py-2 text-sm font-medium shadow-sm max-w-[220px] sm:max-w-[250px]">
               {buddyMessage}
             </div>
           )}
@@ -160,12 +160,12 @@ export default function Chat() {
           <Button
             variant="ghost"
             size="sm"
-            className="text-xs text-muted-foreground"
+            className="text-sm sm:text-xs text-muted-foreground h-9 sm:h-8"
             onClick={() => clearChat.mutate()}
             disabled={clearChat.isPending}
           >
-            <Trash2 className="h-3.5 w-3.5 mr-1" />
-            Clear chat
+            <Trash2 className="h-4 w-4 sm:h-3.5 sm:w-3.5 mr-1" />
+            Clear
           </Button>
         )}
       </div>
@@ -176,7 +176,7 @@ export default function Chat() {
         onSendMessage={handleSendMessage}
         isLoading={sendMessage.isPending}
         placeholder="Tell me how you're feeling, or ask for help..."
-        height="calc(100vh - 280px)"
+        height="calc(100vh - 240px)"
         emptyStateMessage="I'm your ADHD Buddy! Tell me how you're doing, ask for motivation, or let me help you break down tasks."
         suggestedPrompts={SUGGESTED_PROMPTS}
       />

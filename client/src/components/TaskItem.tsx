@@ -175,7 +175,6 @@ export function TaskItem({ task, onComplete, onCelebrate }: TaskItemProps) {
 
   const handleSetDueDate = (date: Date | undefined) => {
     if (date) {
-      // Set to end of day in local timezone
       const d = new Date(date);
       d.setHours(23, 59, 59, 999);
       updateTask.mutate({ id: task.id, dueDate: d.getTime() });
@@ -227,22 +226,22 @@ export function TaskItem({ task, onComplete, onCelebrate }: TaskItemProps) {
         dueDateInfo?.urgency === "overdue" && !task.completed ? "border-red-300" : ""
       } ${dueDateInfo?.urgency === "today" && !task.completed ? "border-orange-300" : ""}`}
     >
-      <div className="flex items-start gap-2 p-3 sm:p-4">
+      <div className="flex items-start gap-2 sm:gap-2 p-3 sm:p-4">
         {/* Drag handle */}
         <button
           {...attributes}
           {...listeners}
-          className="mt-1 text-muted-foreground/50 hover:text-muted-foreground cursor-grab active:cursor-grabbing shrink-0 touch-none"
+          className="mt-1.5 sm:mt-1 text-muted-foreground/50 hover:text-muted-foreground cursor-grab active:cursor-grabbing shrink-0 touch-none p-1 -ml-1"
           aria-label="Drag to reorder"
         >
-          <GripVertical className="h-4 w-4" />
+          <GripVertical className="h-5 w-5 sm:h-4 sm:w-4" />
         </button>
 
         {/* Checkbox */}
         <Checkbox
           checked={task.completed}
           onCheckedChange={handleToggleComplete}
-          className="mt-1 shrink-0"
+          className="mt-1.5 sm:mt-1 shrink-0 h-5 w-5 sm:h-4 sm:w-4"
         />
 
         {/* Content */}
@@ -256,115 +255,116 @@ export function TaskItem({ task, onComplete, onCelebrate }: TaskItemProps) {
                   if (e.key === "Enter") handleSaveEdit();
                   if (e.key === "Escape") setEditing(false);
                 }}
-                className="h-8 text-sm"
+                className="h-10 sm:h-8 text-base sm:text-sm"
                 autoFocus
               />
-              <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={handleSaveEdit}>
-                <Check className="h-3.5 w-3.5" />
+              <Button size="icon" variant="ghost" className="h-9 w-9 sm:h-7 sm:w-7 shrink-0" onClick={handleSaveEdit}>
+                <Check className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
               </Button>
-              <Button size="icon" variant="ghost" className="h-7 w-7 shrink-0" onClick={() => setEditing(false)}>
-                <X className="h-3.5 w-3.5" />
+              <Button size="icon" variant="ghost" className="h-9 w-9 sm:h-7 sm:w-7 shrink-0" onClick={() => setEditing(false)}>
+                <X className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
               </Button>
             </div>
           ) : (
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0">
+            <div>
+              {/* Title row */}
+              <div className="flex items-start justify-between gap-2">
                 <p
-                  className={`text-sm font-semibold leading-snug ${
+                  className={`text-base sm:text-sm font-semibold leading-snug ${
                     task.completed ? "line-through text-muted-foreground" : ""
                   }`}
                 >
                   {task.title}
                 </p>
 
-                {/* Due date badge */}
-                <div className="flex items-center gap-2 mt-1 flex-wrap">
-                  {dueDateInfo && !task.completed && (
-                    <span className={`inline-flex items-center gap-1 text-[11px] font-medium px-1.5 py-0.5 rounded-md border ${dueDateInfo.bgColor} ${dueDateInfo.color}`}>
-                      <dueDateInfo.icon className="h-3 w-3" />
-                      {dueDateInfo.label}
-                    </span>
-                  )}
-                  {totalSubtasks > 0 && (
-                    <p className="text-xs text-muted-foreground">
-                      {completedSubtasks}/{totalSubtasks} subtasks done
-                    </p>
-                  )}
+                {/* Actions - always visible on mobile, hover on desktop */}
+                <div className="flex items-center gap-0.5 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0">
+                  {/* Due date picker */}
+                  <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className={`h-8 w-8 sm:h-7 sm:w-7 ${task.dueDate ? "text-primary" : ""}`}
+                        title="Set due date"
+                      >
+                        <CalendarIcon className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="end">
+                      <div className="p-2">
+                        <Calendar
+                          mode="single"
+                          selected={selectedDate}
+                          onSelect={handleSetDueDate}
+                          initialFocus
+                        />
+                        {task.dueDate && (
+                          <div className="border-t px-3 py-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="w-full text-xs text-muted-foreground"
+                              onClick={() => {
+                                updateTask.mutate({ id: task.id, dueDate: null });
+                                setDatePickerOpen(false);
+                              }}
+                            >
+                              <X className="h-3 w-3 mr-1" />
+                              Remove due date
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-8 w-8 sm:h-7 sm:w-7"
+                    onClick={() => {
+                      setEditTitle(task.title);
+                      setEditing(true);
+                    }}
+                    title="Edit task"
+                  >
+                    <Pencil className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-8 w-8 sm:h-7 sm:w-7"
+                    onClick={() => breakdownTask.mutate({ taskId: task.id })}
+                    disabled={breakdownTask.isPending}
+                    title="Ask Buddy to break this down"
+                  >
+                    <Wand2 className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-8 w-8 sm:h-7 sm:w-7 text-destructive hover:text-destructive"
+                    onClick={() => deleteTask.mutate({ id: task.id })}
+                    title="Delete task"
+                  >
+                    <Trash2 className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+                  </Button>
                 </div>
               </div>
 
-              {/* Actions */}
-              <div className="flex items-center gap-0.5 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity shrink-0">
-                {/* Due date picker */}
-                <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className={`h-7 w-7 ${task.dueDate ? "text-primary" : ""}`}
-                      title="Set due date"
-                    >
-                      <CalendarIcon className="h-3.5 w-3.5" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="end">
-                    <div className="p-2">
-                      <Calendar
-                        mode="single"
-                        selected={selectedDate}
-                        onSelect={handleSetDueDate}
-                        initialFocus
-                      />
-                      {task.dueDate && (
-                        <div className="border-t px-3 py-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="w-full text-xs text-muted-foreground"
-                            onClick={() => {
-                              updateTask.mutate({ id: task.id, dueDate: null });
-                              setDatePickerOpen(false);
-                            }}
-                          >
-                            <X className="h-3 w-3 mr-1" />
-                            Remove due date
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  </PopoverContent>
-                </Popover>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-7 w-7"
-                  onClick={() => {
-                    setEditTitle(task.title);
-                    setEditing(true);
-                  }}
-                  title="Edit task"
-                >
-                  <Pencil className="h-3.5 w-3.5" />
-                </Button>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-7 w-7"
-                  onClick={() => breakdownTask.mutate({ taskId: task.id })}
-                  disabled={breakdownTask.isPending}
-                  title="Ask Buddy to break this down"
-                >
-                  <Wand2 className="h-3.5 w-3.5" />
-                </Button>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-7 w-7 text-destructive hover:text-destructive"
-                  onClick={() => deleteTask.mutate({ id: task.id })}
-                  title="Delete task"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
+              {/* Due date badge + subtask count */}
+              <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                {dueDateInfo && !task.completed && (
+                  <span className={`inline-flex items-center gap-1 text-xs sm:text-[11px] font-medium px-2 py-0.5 rounded-md border ${dueDateInfo.bgColor} ${dueDateInfo.color}`}>
+                    <dueDateInfo.icon className="h-3.5 w-3.5 sm:h-3 sm:w-3" />
+                    {dueDateInfo.label}
+                  </span>
+                )}
+                {totalSubtasks > 0 && (
+                  <p className="text-sm sm:text-xs text-muted-foreground">
+                    {completedSubtasks}/{totalSubtasks} subtasks done
+                  </p>
+                )}
               </div>
             </div>
           )}
@@ -373,12 +373,12 @@ export function TaskItem({ task, onComplete, onCelebrate }: TaskItemProps) {
           {(totalSubtasks > 0 || !task.completed) && (
             <button
               onClick={() => setExpanded(!expanded)}
-              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground mt-1.5 transition-colors"
+              className="flex items-center gap-1 text-sm sm:text-xs text-muted-foreground hover:text-foreground mt-2 sm:mt-1.5 transition-colors py-1"
             >
               {expanded ? (
-                <ChevronDown className="h-3 w-3" />
+                <ChevronDown className="h-4 w-4 sm:h-3 sm:w-3" />
               ) : (
-                <ChevronRight className="h-3 w-3" />
+                <ChevronRight className="h-4 w-4 sm:h-3 sm:w-3" />
               )}
               {totalSubtasks > 0 ? `${totalSubtasks} subtask${totalSubtasks !== 1 ? "s" : ""}` : "Add subtasks"}
             </button>
@@ -396,7 +396,7 @@ export function TaskItem({ task, onComplete, onCelebrate }: TaskItemProps) {
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="px-4 pb-3 pl-10 space-y-1">
+            <div className="px-3 sm:px-4 pb-3 pl-8 sm:pl-10 space-y-1">
               {totalSubtasks > 0 && (
                 <DndContext
                   sensors={sensors}
@@ -433,38 +433,38 @@ export function TaskItem({ task, onComplete, onCelebrate }: TaskItemProps) {
                       }
                     }}
                     placeholder="What's a small step?"
-                    className="h-7 text-xs"
+                    className="h-9 sm:h-7 text-sm sm:text-xs"
                     autoFocus
                   />
                   <Button
                     size="icon"
                     variant="ghost"
-                    className="h-7 w-7 shrink-0"
+                    className="h-9 w-9 sm:h-7 sm:w-7 shrink-0"
                     onClick={handleAddSubtask}
                     disabled={!newSubtask.trim() || createSubtask.isPending}
                   >
-                    <Check className="h-3.5 w-3.5" />
+                    <Check className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
                   </Button>
                   <Button
                     size="icon"
                     variant="ghost"
-                    className="h-7 w-7 shrink-0"
+                    className="h-9 w-9 sm:h-7 sm:w-7 shrink-0"
                     onClick={() => {
                       setShowAddSubtask(false);
                       setNewSubtask("");
                     }}
                   >
-                    <X className="h-3.5 w-3.5" />
+                    <X className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
                   </Button>
                 </div>
               ) : (
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-7 text-xs text-muted-foreground hover:text-foreground mt-1"
+                  className="h-9 sm:h-7 text-sm sm:text-xs text-muted-foreground hover:text-foreground mt-1"
                   onClick={() => setShowAddSubtask(true)}
                 >
-                  <Plus className="h-3 w-3 mr-1" />
+                  <Plus className="h-4 w-4 sm:h-3 sm:w-3 mr-1" />
                   Add subtask
                 </Button>
               )}
@@ -475,9 +475,9 @@ export function TaskItem({ task, onComplete, onCelebrate }: TaskItemProps) {
 
       {/* Breakdown loading indicator */}
       {breakdownTask.isPending && (
-        <div className="px-4 pb-3 pl-10">
-          <div className="flex items-center gap-2 text-xs text-primary">
-            <Sparkles className="h-3.5 w-3.5 animate-spin" />
+        <div className="px-3 sm:px-4 pb-3 pl-8 sm:pl-10">
+          <div className="flex items-center gap-2 text-sm sm:text-xs text-primary">
+            <Sparkles className="h-4 w-4 sm:h-3.5 sm:w-3.5 animate-spin" />
             <span>Buddy is breaking this down for you...</span>
           </div>
         </div>

@@ -63,10 +63,10 @@ export default function DashboardLayout({
         <div className="flex flex-col items-center gap-6 p-8 max-w-md w-full">
           <BuddyCharacter mood="waving" size={120} message="Hey there! Sign in to get started!" />
           <div className="flex flex-col items-center gap-3 mt-4">
-            <h1 className="text-2xl font-bold tracking-tight text-center">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-center">
               Welcome to ADHD Buddy
             </h1>
-            <p className="text-sm text-muted-foreground text-center max-w-sm">
+            <p className="text-base text-muted-foreground text-center max-w-sm">
               Your supportive accountability partner is ready to help you get things done.
             </p>
           </div>
@@ -75,7 +75,7 @@ export default function DashboardLayout({
               window.location.href = getLoginUrl();
             }}
             size="lg"
-            className="w-full shadow-lg hover:shadow-xl transition-all rounded-xl font-bold"
+            className="w-full shadow-lg hover:shadow-xl transition-all rounded-xl font-bold text-base py-6"
           >
             Sign In to Continue
           </Button>
@@ -250,19 +250,41 @@ function DashboardLayoutContent({
 
       <SidebarInset>
         {isMobile && (
-          <div className="flex border-b h-14 items-center justify-between bg-background/95 px-2 backdrop-blur supports-[backdrop-filter]:backdrop-blur sticky top-0 z-40">
-            <div className="flex items-center gap-2">
-              <SidebarTrigger className="h-9 w-9 rounded-lg bg-background" />
+          <div className="flex border-b h-14 items-center justify-between bg-background/95 px-3 backdrop-blur supports-[backdrop-filter]:backdrop-blur sticky top-0 z-40">
+            <div className="flex items-center gap-3">
+              <SidebarTrigger className="h-10 w-10 rounded-lg bg-background" />
               <div className="flex items-center gap-2">
                 <span className="text-lg">🧠</span>
-                <span className="font-bold text-primary">
+                <span className="font-bold text-base text-primary">
                   {activeMenuItem?.label ?? "ADHD Buddy"}
                 </span>
               </div>
             </div>
+            {/* Mobile user avatar with logout */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                  <span className="text-sm font-bold text-primary">
+                    {user?.name?.charAt(0).toUpperCase() || "?"}
+                  </span>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem disabled className="opacity-70">
+                  <span className="truncate">{user?.name || "User"}</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={logout}
+                  className="cursor-pointer text-destructive focus:text-destructive"
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Sign out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         )}
-        <main className="flex-1 p-4 sm:p-6">{children}</main>
+        <main className="flex-1 p-3 sm:p-6">{children}</main>
       </SidebarInset>
     </>
   );

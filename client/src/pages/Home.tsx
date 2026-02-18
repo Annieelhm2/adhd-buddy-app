@@ -65,7 +65,7 @@ export default function Home() {
                 Meet Your{" "}
                 <span className="text-primary">ADHD Buddy</span>
               </h1>
-              <p className="text-lg sm:text-xl text-muted-foreground max-w-xl mx-auto leading-relaxed">
+              <p className="text-base sm:text-xl text-muted-foreground max-w-xl mx-auto leading-relaxed px-2">
                 Your friendly accountability partner that helps you get things done
                 — with encouragement, not pressure.
               </p>
@@ -107,7 +107,7 @@ export default function Home() {
           <h2 className="text-2xl sm:text-3xl font-bold">
             Designed for ADHD Brains
           </h2>
-          <p className="text-muted-foreground mt-2 max-w-lg mx-auto">
+          <p className="text-base sm:text-base text-muted-foreground mt-2 max-w-lg mx-auto px-2">
             Every feature is built with understanding and care for how ADHD minds work best.
           </p>
         </motion.div>
@@ -170,8 +170,8 @@ export default function Home() {
               >
                 {feature.icon}
               </div>
-              <h3 className="font-bold text-base mb-2">{feature.title}</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
+              <h3 className="font-bold text-lg sm:text-base mb-2">{feature.title}</h3>
+              <p className="text-base sm:text-sm text-muted-foreground leading-relaxed">
                 {feature.description}
               </p>
             </motion.div>
@@ -192,7 +192,7 @@ export default function Home() {
           <h2 className="text-2xl sm:text-3xl font-bold mt-4">
             Ready to Get Things Done?
           </h2>
-          <p className="text-muted-foreground mt-2 max-w-md mx-auto">
+          <p className="text-base text-muted-foreground mt-2 max-w-md mx-auto">
             Your ADHD Buddy is waiting to help you tackle your day with confidence.
           </p>
           <Button
@@ -209,7 +209,7 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="border-t py-8">
-        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
+        <div className="container mx-auto px-4 text-center text-base sm:text-sm text-muted-foreground">
           <p>
             Made with care for ADHD minds everywhere.
           </p>

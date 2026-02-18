@@ -32,3 +32,9 @@
 - [x] Pass task/subtask/due date context to ADHD Buddy chat LLM
 - [x] Update tests for due date functionality
 - [x] Fix: Task action icons not visible on mobile (hover-only issue)
+- [x] Improve mobile UI: larger text sizes across all components
+- [x] Improve mobile UI: better spacing and padding for touch targets
+- [x] Improve mobile UI: DashboardLayout mobile navigation
+- [x] Improve mobile UI: TaskItem and SubtaskItem touch-friendly sizing
+- [x] Improve mobile UI: Chat page mobile layout
+- [x] Improve mobile UI: Tasks page header and buddy character sizing

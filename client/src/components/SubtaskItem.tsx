@@ -71,23 +71,23 @@ export function SubtaskItem({ subtask, taskId, onCelebrate }: SubtaskItemProps) 
     <div
       ref={setNodeRef}
       style={style}
-      className={`group/subtask flex items-center gap-2 py-1 rounded-md hover:bg-muted/50 px-1 ${
+      className={`group/subtask flex items-center gap-2 py-1.5 sm:py-1 rounded-md hover:bg-muted/50 px-1 ${
         isDragging ? "z-50 bg-card shadow-md" : ""
       }`}
     >
       <button
         {...attributes}
         {...listeners}
-        className="text-muted-foreground/30 hover:text-muted-foreground cursor-grab active:cursor-grabbing shrink-0 touch-none"
+        className="text-muted-foreground/30 hover:text-muted-foreground cursor-grab active:cursor-grabbing shrink-0 touch-none p-0.5"
         aria-label="Drag to reorder subtask"
       >
-        <GripVertical className="h-3 w-3" />
+        <GripVertical className="h-4 w-4 sm:h-3 sm:w-3" />
       </button>
 
       <Checkbox
         checked={subtask.completed}
         onCheckedChange={handleToggle}
-        className="shrink-0 h-3.5 w-3.5"
+        className="shrink-0 h-4.5 w-4.5 sm:h-3.5 sm:w-3.5"
       />
 
       {editing ? (
@@ -99,19 +99,19 @@ export function SubtaskItem({ subtask, taskId, onCelebrate }: SubtaskItemProps) 
               if (e.key === "Enter") handleSaveEdit();
               if (e.key === "Escape") setEditing(false);
             }}
-            className="h-6 text-xs"
+            className="h-8 sm:h-6 text-sm sm:text-xs"
             autoFocus
           />
-          <Button size="icon" variant="ghost" className="h-6 w-6 shrink-0" onClick={handleSaveEdit}>
-            <Check className="h-3 w-3" />
+          <Button size="icon" variant="ghost" className="h-8 w-8 sm:h-6 sm:w-6 shrink-0" onClick={handleSaveEdit}>
+            <Check className="h-3.5 w-3.5 sm:h-3 sm:w-3" />
           </Button>
-          <Button size="icon" variant="ghost" className="h-6 w-6 shrink-0" onClick={() => setEditing(false)}>
-            <X className="h-3 w-3" />
+          <Button size="icon" variant="ghost" className="h-8 w-8 sm:h-6 sm:w-6 shrink-0" onClick={() => setEditing(false)}>
+            <X className="h-3.5 w-3.5 sm:h-3 sm:w-3" />
           </Button>
         </div>
       ) : (
         <span
-          className={`text-xs flex-1 ${
+          className={`text-sm sm:text-xs flex-1 ${
             subtask.completed ? "line-through text-muted-foreground" : ""
           }`}
         >
@@ -123,23 +123,23 @@ export function SubtaskItem({ subtask, taskId, onCelebrate }: SubtaskItemProps) 
         <Button
           size="icon"
           variant="ghost"
-          className="h-6 w-6"
+          className="h-8 w-8 sm:h-6 sm:w-6"
           onClick={() => {
             setEditTitle(subtask.title);
             setEditing(true);
           }}
           title="Edit subtask"
         >
-          <Pencil className="h-2.5 w-2.5" />
+          <Pencil className="h-3.5 w-3.5 sm:h-2.5 sm:w-2.5" />
         </Button>
         <Button
           size="icon"
           variant="ghost"
-          className="h-6 w-6 text-destructive hover:text-destructive"
+          className="h-8 w-8 sm:h-6 sm:w-6 text-destructive hover:text-destructive"
           onClick={() => deleteSubtask.mutate({ id: subtask.id })}
           title="Delete subtask"
         >
-          <Trash2 className="h-2.5 w-2.5" />
+          <Trash2 className="h-3.5 w-3.5 sm:h-2.5 sm:w-2.5" />
         </Button>
       </div>
     </div>

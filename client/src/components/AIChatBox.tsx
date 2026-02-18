@@ -15,101 +15,16 @@ export type Message = {
 };
 
 export type AIChatBoxProps = {
-  /**
-   * Messages array to display in the chat.
-   * Should match the format used by invokeLLM on the server.
-   */
   messages: Message[];
-
-  /**
-   * Callback when user sends a message.
-   * Typically you'll call a tRPC mutation here to invoke the LLM.
-   */
   onSendMessage: (content: string) => void;
-
-  /**
-   * Whether the AI is currently generating a response
-   */
   isLoading?: boolean;
-
-  /**
-   * Placeholder text for the input field
-   */
   placeholder?: string;
-
-  /**
-   * Custom className for the container
-   */
   className?: string;
-
-  /**
-   * Height of the chat box (default: 600px)
-   */
   height?: string | number;
-
-  /**
-   * Empty state message to display when no messages
-   */
   emptyStateMessage?: string;
-
-  /**
-   * Suggested prompts to display in empty state
-   * Click to send directly
-   */
   suggestedPrompts?: string[];
 };
 
-/**
- * A ready-to-use AI chat box component that integrates with the LLM system.
- *
- * Features:
- * - Matches server-side Message interface for seamless integration
- * - Markdown rendering with Streamdown
- * - Auto-scrolls to latest message
- * - Loading states
- * - Uses global theme colors from index.css
- *
- * @example
- * ```tsx
- * const ChatPage = () => {
- *   const [messages, setMessages] = useState<Message[]>([
- *     { role: "system", content: "You are a helpful assistant." }
- *   ]);
- *
- *   const chatMutation = trpc.ai.chat.useMutation({
- *     onSuccess: (response) => {
- *       // Assuming your tRPC endpoint returns the AI response as a string
- *       setMessages(prev => [...prev, {
- *         role: "assistant",
- *         content: response
- *       }]);
- *     },
- *     onError: (error) => {
- *       console.error("Chat error:", error);
- *       // Optionally show error message to user
- *     }
- *   });
- *
- *   const handleSend = (content: string) => {
- *     const newMessages = [...messages, { role: "user", content }];
- *     setMessages(newMessages);
- *     chatMutation.mutate({ messages: newMessages });
- *   };
- *
- *   return (
- *     <AIChatBox
- *       messages={messages}
- *       onSendMessage={handleSend}
- *       isLoading={chatMutation.isPending}
- *       suggestedPrompts={[
- *         "Explain quantum computing",
- *         "Write a hello world in Python"
- *       ]}
- *     />
- *   );
- * };
- * ```
- */
 export function AIChatBox({
   messages,
   onSendMessage,
@@ -137,14 +52,8 @@ export function AIChatBox({
       const containerHeight = containerRef.current.offsetHeight;
       const inputHeight = inputAreaRef.current.offsetHeight;
       const scrollAreaHeight = containerHeight - inputHeight;
-
-      // Reserve space for:
-      // - padding (p-4 = 32px top+bottom)
-      // - user message: 40px (item height) + 16px (margin-top from space-y-4) = 56px
-      // Note: margin-bottom is not counted because it naturally pushes the assistant message down
       const userMessageReservedHeight = 56;
       const calculatedHeight = scrollAreaHeight - 32 - userMessageReservedHeight;
-
       setMinHeightForLastMessage(Math.max(0, calculatedHeight));
     }
   }, []);
@@ -173,10 +82,7 @@ export function AIChatBox({
     onSendMessage(trimmedInput);
     setInput("");
 
-    // Scroll immediately after sending
     scrollToBottom();
-
-    // Keep focus on input
     textareaRef.current?.focus();
   };
 
@@ -203,17 +109,17 @@ export function AIChatBox({
             <div className="flex flex-1 flex-col items-center justify-center gap-6 text-muted-foreground">
               <div className="flex flex-col items-center gap-3">
                 <Sparkles className="size-12 opacity-20" />
-                <p className="text-sm">{emptyStateMessage}</p>
+                <p className="text-base sm:text-sm text-center px-4">{emptyStateMessage}</p>
               </div>
 
               {suggestedPrompts && suggestedPrompts.length > 0 && (
-                <div className="flex max-w-2xl flex-wrap justify-center gap-2">
+                <div className="flex max-w-2xl flex-wrap justify-center gap-2 px-2">
                   {suggestedPrompts.map((prompt, index) => (
                     <button
                       key={index}
                       onClick={() => onSendMessage(prompt)}
                       disabled={isLoading}
-                      className="rounded-lg border border-border bg-card px-4 py-2 text-sm transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
+                      className="rounded-lg border border-border bg-card px-4 py-2.5 sm:py-2 text-sm transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {prompt}
                     </button>
@@ -224,9 +130,8 @@ export function AIChatBox({
           </div>
         ) : (
           <ScrollArea className="h-full">
-            <div className="flex flex-col space-y-4 p-4">
+            <div className="flex flex-col space-y-4 p-3 sm:p-4">
               {displayMessages.map((message, index) => {
-                // Apply min-height to last message only if NOT loading (when loading, the loading indicator gets it)
                 const isLastMessage = index === displayMessages.length - 1;
                 const shouldApplyMinHeight =
                   isLastMessage && !isLoading && minHeightForLastMessage > 0;
@@ -235,7 +140,7 @@ export function AIChatBox({
                   <div
                     key={index}
                     className={cn(
-                      "flex gap-3",
+                      "flex gap-2 sm:gap-3",
                       message.role === "user"
                         ? "justify-end items-start"
                         : "justify-start items-start"
@@ -247,32 +152,32 @@ export function AIChatBox({
                     }
                   >
                     {message.role === "assistant" && (
-                      <div className="size-8 shrink-0 mt-1 rounded-full bg-primary/10 flex items-center justify-center">
+                      <div className="size-8 sm:size-8 shrink-0 mt-1 rounded-full bg-primary/10 flex items-center justify-center">
                         <Sparkles className="size-4 text-primary" />
                       </div>
                     )}
 
                     <div
                       className={cn(
-                        "max-w-[80%] rounded-lg px-4 py-2.5",
+                        "max-w-[85%] sm:max-w-[80%] rounded-lg px-3.5 sm:px-4 py-2.5",
                         message.role === "user"
                           ? "bg-primary text-primary-foreground"
                           : "bg-muted text-foreground"
                       )}
                     >
                       {message.role === "assistant" ? (
-                        <div className="prose prose-sm dark:prose-invert max-w-none">
+                        <div className="prose prose-sm dark:prose-invert max-w-none [&_p]:text-[0.9375rem] sm:[&_p]:text-sm [&_li]:text-[0.9375rem] sm:[&_li]:text-sm">
                           <Streamdown>{message.content}</Streamdown>
                         </div>
                       ) : (
-                        <p className="whitespace-pre-wrap text-sm">
+                        <p className="whitespace-pre-wrap text-[0.9375rem] sm:text-sm">
                           {message.content}
                         </p>
                       )}
                     </div>
 
                     {message.role === "user" && (
-                      <div className="size-8 shrink-0 mt-1 rounded-full bg-secondary flex items-center justify-center">
+                      <div className="size-8 sm:size-8 shrink-0 mt-1 rounded-full bg-secondary flex items-center justify-center">
                         <User className="size-4 text-secondary-foreground" />
                       </div>
                     )}
@@ -282,7 +187,7 @@ export function AIChatBox({
 
               {isLoading && (
                 <div
-                  className="flex items-start gap-3"
+                  className="flex items-start gap-2 sm:gap-3"
                   style={
                     minHeightForLastMessage > 0
                       ? { minHeight: `${minHeightForLastMessage}px` }
@@ -306,7 +211,7 @@ export function AIChatBox({
       <form
         ref={inputAreaRef}
         onSubmit={handleSubmit}
-        className="flex gap-2 p-4 border-t bg-background/50 items-end"
+        className="flex gap-2 p-3 sm:p-4 border-t bg-background/50 items-end"
       >
         <Textarea
           ref={textareaRef}
@@ -314,14 +219,14 @@ export function AIChatBox({
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
-          className="flex-1 max-h-32 resize-none min-h-9"
+          className="flex-1 max-h-32 resize-none min-h-[44px] sm:min-h-9 text-base sm:text-sm"
           rows={1}
         />
         <Button
           type="submit"
           size="icon"
           disabled={!input.trim() || isLoading}
-          className="shrink-0 h-[38px] w-[38px]"
+          className="shrink-0 h-[44px] w-[44px] sm:h-[38px] sm:w-[38px]"
         >
           {isLoading ? (
             <Loader2 className="size-4 animate-spin" />

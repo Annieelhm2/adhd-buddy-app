@@ -49,13 +49,13 @@ export default function Tasks() {
     return (
       <div className="space-y-6 p-2">
         <div className="flex justify-center">
-          <Skeleton className="h-32 w-32 rounded-full" />
+          <Skeleton className="h-24 w-24 sm:h-32 sm:w-32 rounded-full" />
         </div>
         <Skeleton className="h-8 w-48" />
         <div className="space-y-3">
-          <Skeleton className="h-16 w-full rounded-xl" />
-          <Skeleton className="h-16 w-full rounded-xl" />
-          <Skeleton className="h-16 w-full rounded-xl" />
+          <Skeleton className="h-20 w-full rounded-xl" />
+          <Skeleton className="h-20 w-full rounded-xl" />
+          <Skeleton className="h-20 w-full rounded-xl" />
         </div>
       </div>
     );
@@ -63,10 +63,10 @@ export default function Tasks() {
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-center">
+      <div className="flex flex-col items-center justify-center py-16 text-center px-4">
         <AlertTriangle className="h-12 w-12 text-destructive mb-4" />
         <p className="text-lg font-semibold">Something went wrong</p>
-        <p className="text-sm text-muted-foreground mt-1">
+        <p className="text-base text-muted-foreground mt-2">
           Could not load your tasks. Please try refreshing.
         </p>
       </div>
@@ -74,14 +74,14 @@ export default function Tasks() {
   }
 
   return (
-    <div className="space-y-6 max-w-3xl mx-auto">
+    <div className="space-y-6 sm:space-y-8 max-w-3xl mx-auto">
       <Confetti active={confettiActive} />
 
       {/* Buddy section */}
-      <div className="flex justify-center pt-2">
+      <div className="flex justify-center pt-1 sm:pt-2">
         <BuddyCharacter
           mood={buddyMood}
-          size={100}
+          size={90}
           message={buddyMessage}
         />
       </div>
@@ -92,7 +92,7 @@ export default function Tasks() {
         listType="must_do"
         tasks={mustDoTasks}
         onCelebrate={handleCelebrate}
-        icon={<Zap className="h-4 w-4 text-orange-600" />}
+        icon={<Zap className="h-4 w-4 sm:h-5 sm:w-5 text-orange-600" />}
         accentColor="bg-orange-100"
       />
 
@@ -102,7 +102,7 @@ export default function Tasks() {
         listType="could_do"
         tasks={couldDoTasks}
         onCelebrate={handleCelebrate}
-        icon={<span className="text-sm">🌿</span>}
+        icon={<span className="text-base sm:text-lg">🌿</span>}
         accentColor="bg-teal-100"
       />
     </div>

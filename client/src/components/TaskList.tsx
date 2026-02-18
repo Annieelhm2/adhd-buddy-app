@@ -121,21 +121,21 @@ export function TaskList({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className={`p-1.5 rounded-lg ${accentColor}`}>
+          <div className={`p-1.5 sm:p-2 rounded-lg ${accentColor}`}>
             {icon}
           </div>
-          <h2 className="text-lg font-bold">{title}</h2>
-          <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+          <h2 className="text-lg sm:text-xl font-bold">{title}</h2>
+          <span className="text-xs sm:text-sm text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
             {pendingTasks.length} pending
           </span>
         </div>
         <Button
           size="sm"
           variant="outline"
-          className="h-8 text-xs"
+          className="h-9 sm:h-8 text-sm sm:text-xs px-3"
           onClick={() => setShowAdd(true)}
         >
-          <Plus className="h-3.5 w-3.5 mr-1" />
+          <Plus className="h-4 w-4 sm:h-3.5 sm:w-3.5 mr-1" />
           Add
         </Button>
       </div>
@@ -149,7 +149,7 @@ export function TaskList({
             exit={{ height: 0, opacity: 0 }}
             className="overflow-hidden"
           >
-            <div className="flex items-center gap-2 p-3 rounded-xl border bg-card">
+            <div className="flex items-center gap-2 p-3 sm:p-3 rounded-xl border bg-card">
               <Input
                 value={newTaskTitle}
                 onChange={(e) => setNewTaskTitle(e.target.value)}
@@ -165,11 +165,12 @@ export function TaskList({
                     ? "What needs to get done?"
                     : "What would be nice to do?"
                 }
-                className="text-sm"
+                className="text-base sm:text-sm h-10 sm:h-9"
                 autoFocus
               />
               <Button
                 size="sm"
+                className="h-10 sm:h-9 px-4 text-sm"
                 onClick={handleAddTask}
                 disabled={!newTaskTitle.trim() || createTask.isPending}
               >
@@ -178,6 +179,7 @@ export function TaskList({
               <Button
                 size="sm"
                 variant="ghost"
+                className="h-10 sm:h-9 px-3 text-sm"
                 onClick={() => {
                   setShowAdd(false);
                   setNewTaskTitle("");
@@ -192,17 +194,17 @@ export function TaskList({
 
       {/* Task list */}
       {tasks.length === 0 ? (
-        <div className="text-center py-8 text-muted-foreground">
-          <ListChecks className="h-10 w-10 mx-auto mb-3 opacity-30" />
-          <p className="text-sm font-medium">No tasks yet</p>
-          <p className="text-xs mt-1">
+        <div className="text-center py-10 sm:py-8 text-muted-foreground">
+          <ListChecks className="h-12 w-12 sm:h-10 sm:w-10 mx-auto mb-3 opacity-30" />
+          <p className="text-base sm:text-sm font-medium">No tasks yet</p>
+          <p className="text-sm sm:text-xs mt-1">
             {listType === "must_do"
               ? "Add your important tasks here"
               : "Add things you'd like to do when you have time"}
           </p>
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-2 sm:space-y-2">
           {/* Pending tasks with drag-and-drop */}
           {pendingTasks.length > 0 && (
             <DndContext
@@ -231,11 +233,11 @@ export function TaskList({
           {/* Completed tasks */}
           {completedTasks.length > 0 && (
             <div className="mt-4">
-              <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
-                <Sparkles className="h-3 w-3" />
+              <p className="text-sm sm:text-xs text-muted-foreground mb-2 flex items-center gap-1">
+                <Sparkles className="h-3.5 w-3.5 sm:h-3 sm:w-3" />
                 Completed ({completedTasks.length})
               </p>
-              <div className="space-y-1.5">
+              <div className="space-y-2 sm:space-y-1.5">
                 {completedTasks.map((task) => (
                   <TaskItem
                     key={task.id}

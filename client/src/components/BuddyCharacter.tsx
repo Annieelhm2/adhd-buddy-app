@@ -246,7 +246,7 @@ export function BuddyCharacter({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.9 }}
             transition={{ duration: 0.3 }}
-            className="relative bg-card text-card-foreground border border-border rounded-2xl px-4 py-2.5 max-w-[280px] text-center text-sm font-medium shadow-md"
+            className="relative bg-card text-card-foreground border border-border rounded-2xl px-4 py-2.5 max-w-[300px] sm:max-w-[280px] text-center text-base sm:text-sm font-medium shadow-md"
           >
             {/* Speech bubble arrow */}
             <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-card border-l border-t border-border rotate-45" />
