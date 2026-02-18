@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import {
   GripVertical,
   ChevronDown,
@@ -16,6 +18,9 @@ import {
   X,
   Sparkles,
   Wand2,
+  CalendarIcon,
+  Clock,
+  AlertTriangle,
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -42,6 +47,7 @@ interface TaskItemProps {
     description: string | null;
     listType: "must_do" | "could_do";
     completed: boolean;
+    dueDate: number | null;
     subtasks: Array<{
       id: number;
       title: string;
@@ -53,14 +59,42 @@ interface TaskItemProps {
   onCelebrate: () => void;
 }
 
+function getDueDateInfo(dueDate: number | null) {
+  if (!dueDate) return null;
+  const due = new Date(dueDate);
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const dueDay = new Date(due);
+  dueDay.setHours(0, 0, 0, 0);
+  const diffMs = dueDay.getTime() - now.getTime();
+  const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+
+  const dateStr = due.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+
+  if (diffDays < 0) {
+    return { label: `Overdue (${dateStr})`, color: "text-red-600", bgColor: "bg-red-50 border-red-200", icon: AlertTriangle, urgency: "overdue" };
+  } else if (diffDays === 0) {
+    return { label: `Due today`, color: "text-orange-600", bgColor: "bg-orange-50 border-orange-200", icon: Clock, urgency: "today" };
+  } else if (diffDays === 1) {
+    return { label: `Due tomorrow`, color: "text-amber-600", bgColor: "bg-amber-50 border-amber-200", icon: Clock, urgency: "tomorrow" };
+  } else if (diffDays <= 3) {
+    return { label: `Due in ${diffDays} days`, color: "text-yellow-600", bgColor: "bg-yellow-50 border-yellow-200", icon: CalendarIcon, urgency: "soon" };
+  } else {
+    return { label: `Due ${dateStr}`, color: "text-muted-foreground", bgColor: "bg-muted/50 border-border", icon: CalendarIcon, urgency: "later" };
+  }
+}
+
 export function TaskItem({ task, onComplete, onCelebrate }: TaskItemProps) {
   const [expanded, setExpanded] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(task.title);
   const [newSubtask, setNewSubtask] = useState("");
   const [showAddSubtask, setShowAddSubtask] = useState(false);
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
 
   const utils = trpc.useUtils();
+
+  const dueDateInfo = useMemo(() => getDueDateInfo(task.dueDate), [task.dueDate]);
 
   const {
     attributes,
@@ -139,6 +173,18 @@ export function TaskItem({ task, onComplete, onCelebrate }: TaskItemProps) {
     }
   };
 
+  const handleSetDueDate = (date: Date | undefined) => {
+    if (date) {
+      // Set to end of day in local timezone
+      const d = new Date(date);
+      d.setHours(23, 59, 59, 999);
+      updateTask.mutate({ id: task.id, dueDate: d.getTime() });
+    } else {
+      updateTask.mutate({ id: task.id, dueDate: null });
+    }
+    setDatePickerOpen(false);
+  };
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
@@ -165,6 +211,8 @@ export function TaskItem({ task, onComplete, onCelebrate }: TaskItemProps) {
   const completedSubtasks = task.subtasks.filter((s) => s.completed).length;
   const totalSubtasks = task.subtasks.length;
 
+  const selectedDate = task.dueDate ? new Date(task.dueDate) : undefined;
+
   return (
     <motion.div
       ref={setNodeRef}
@@ -175,7 +223,9 @@ export function TaskItem({ task, onComplete, onCelebrate }: TaskItemProps) {
       exit={{ opacity: 0, x: -50 }}
       className={`group rounded-xl border bg-card text-card-foreground shadow-sm transition-all hover:shadow-md ${
         task.completed ? "opacity-70" : ""
-      } ${isDragging ? "z-50 shadow-lg" : ""}`}
+      } ${isDragging ? "z-50 shadow-lg" : ""} ${
+        dueDateInfo?.urgency === "overdue" && !task.completed ? "border-red-300" : ""
+      } ${dueDateInfo?.urgency === "today" && !task.completed ? "border-orange-300" : ""}`}
     >
       <div className="flex items-start gap-2 p-3 sm:p-4">
         {/* Drag handle */}
@@ -226,15 +276,64 @@ export function TaskItem({ task, onComplete, onCelebrate }: TaskItemProps) {
                 >
                   {task.title}
                 </p>
-                {totalSubtasks > 0 && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {completedSubtasks}/{totalSubtasks} subtasks done
-                  </p>
-                )}
+
+                {/* Due date badge */}
+                <div className="flex items-center gap-2 mt-1 flex-wrap">
+                  {dueDateInfo && !task.completed && (
+                    <span className={`inline-flex items-center gap-1 text-[11px] font-medium px-1.5 py-0.5 rounded-md border ${dueDateInfo.bgColor} ${dueDateInfo.color}`}>
+                      <dueDateInfo.icon className="h-3 w-3" />
+                      {dueDateInfo.label}
+                    </span>
+                  )}
+                  {totalSubtasks > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      {completedSubtasks}/{totalSubtasks} subtasks done
+                    </p>
+                  )}
+                </div>
               </div>
 
               {/* Actions */}
               <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                {/* Due date picker */}
+                <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className={`h-7 w-7 ${task.dueDate ? "text-primary" : ""}`}
+                      title="Set due date"
+                    >
+                      <CalendarIcon className="h-3.5 w-3.5" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="end">
+                    <div className="p-2">
+                      <Calendar
+                        mode="single"
+                        selected={selectedDate}
+                        onSelect={handleSetDueDate}
+                        initialFocus
+                      />
+                      {task.dueDate && (
+                        <div className="border-t px-3 py-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="w-full text-xs text-muted-foreground"
+                            onClick={() => {
+                              updateTask.mutate({ id: task.id, dueDate: null });
+                              setDatePickerOpen(false);
+                            }}
+                          >
+                            <X className="h-3 w-3 mr-1" />
+                            Remove due date
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </PopoverContent>
+                </Popover>
                 <Button
                   size="icon"
                   variant="ghost"

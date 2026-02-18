@@ -1,18 +1,5 @@
-# UI Status Notes - Updated
+# UI Status - Due Date Feature
 
-## Chat Page
-- Chat with Buddy page loads correctly
-- Buddy character shows with speech bubble "Hey there! I'm your ADHD Buddy. How can I help you today?"
-- Suggested prompts display correctly: overwhelmed, get started, motivation, can't focus, celebrate
-- Text input area with placeholder text works
-- Sidebar navigation active state highlights correctly
-- Empty state message shows properly
+The app compiles with no TypeScript errors. The task "Tidy Up" shows with 6 subtasks. The due date feature is implemented in the backend and the TaskItem component now has a calendar icon in the hover actions. The due date badge shows with urgency-based coloring (overdue=red, today=orange, tomorrow=amber, soon=yellow, later=muted). The chat context now includes full task details with due dates and subtask progress for the buddy to reference.
 
-## Tasks Page  
-- Both Must Do and Could Do lists render with empty states
-- Buddy character bounces with encouraging message
-- Add buttons visible for both lists
-
-## Issues to Address
-- The buddy character on chat page could use the BuddyCharacter SVG instead of just a green circle (it seems to be rendering the SVG correctly based on the screenshot)
-- Need to verify task creation and chat sending work end-to-end
+Need to: update tests, then deliver.

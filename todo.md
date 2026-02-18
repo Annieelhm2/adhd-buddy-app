@@ -25,3 +25,9 @@
 - [x] Frontend: Loading states and empty states
 - [x] Write vitest tests for server procedures
 - [x] Clean up test data from database (tasks, subtasks, chat messages)
+- [x] Add dueDate column to tasks table in database schema
+- [x] Update tRPC procedures to support dueDate in create/update
+- [x] Add date picker UI for setting due dates on tasks
+- [x] Display due dates on task cards with urgency indicators
+- [x] Pass task/subtask/due date context to ADHD Buddy chat LLM
+- [x] Update tests for due date functionality

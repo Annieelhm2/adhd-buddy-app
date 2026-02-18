@@ -124,6 +124,7 @@ export async function createTask(data: {
   title: string;
   description?: string;
   listType: "must_do" | "could_do";
+  dueDate?: number | null;
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -142,6 +143,7 @@ export async function createTask(data: {
     description: data.description ?? null,
     listType: data.listType,
     sortOrder: nextOrder,
+    dueDate: data.dueDate ?? null,
   });
 
   return { id: Number(result[0].insertId) };
@@ -152,6 +154,7 @@ export async function updateTask(taskId: number, userId: number, data: {
   description?: string | null;
   listType?: "must_do" | "could_do";
   completed?: boolean;
+  dueDate?: number | null;
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -160,6 +163,7 @@ export async function updateTask(taskId: number, userId: number, data: {
   if (data.title !== undefined) updateSet.title = data.title;
   if (data.description !== undefined) updateSet.description = data.description;
   if (data.listType !== undefined) updateSet.listType = data.listType;
+  if (data.dueDate !== undefined) updateSet.dueDate = data.dueDate;
   if (data.completed !== undefined) {
     updateSet.completed = data.completed;
     updateSet.completedAt = data.completed ? new Date() : null;

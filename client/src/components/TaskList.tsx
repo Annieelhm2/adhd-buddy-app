@@ -30,6 +30,7 @@ interface TaskListProps {
     description: string | null;
     listType: "must_do" | "could_do";
     completed: boolean;
+    dueDate: number | null;
     subtasks: Array<{
       id: number;
       title: string;

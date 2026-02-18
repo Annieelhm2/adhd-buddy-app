@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean } from "drizzle-orm/mysql-core";
+import { bigint, int, mysqlEnum, mysqlTable, text, timestamp, varchar, boolean } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -29,6 +29,7 @@ export const tasks = mysqlTable("tasks", {
   listType: mysqlEnum("listType", ["must_do", "could_do"]).notNull().default("must_do"),
   completed: boolean("completed").notNull().default(false),
   sortOrder: int("sortOrder").notNull().default(0),
+  dueDate: bigint("dueDate", { mode: "number" }),
   completedAt: timestamp("completedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

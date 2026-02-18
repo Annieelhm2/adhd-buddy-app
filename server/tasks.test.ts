@@ -292,6 +292,76 @@ describe("tasks.reorder", () => {
   });
 });
 
+describe("tasks.dueDate", () => {
+  it("creates a task with a due date", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const tomorrow = Date.now() + 24 * 60 * 60 * 1000;
+    const result = await caller.tasks.create({
+      title: "Task with due date",
+      listType: "must_do",
+      dueDate: tomorrow,
+    });
+
+    expect(result).toHaveProperty("id");
+
+    const tasks = await caller.tasks.list();
+    const task = tasks.find((t) => t.id === result.id);
+    expect(task).toBeDefined();
+    expect(task?.dueDate).toBe(tomorrow);
+  });
+
+  it("creates a task without a due date (null)", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const result = await caller.tasks.create({
+      title: "Task no due date",
+      listType: "must_do",
+    });
+
+    const tasks = await caller.tasks.list();
+    const task = tasks.find((t) => t.id === result.id);
+    expect(task?.dueDate).toBeNull();
+  });
+
+  it("updates a task due date", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const created = await caller.tasks.create({
+      title: "Update due date task",
+      listType: "must_do",
+    });
+
+    const nextWeek = Date.now() + 7 * 24 * 60 * 60 * 1000;
+    await caller.tasks.update({ id: created.id, dueDate: nextWeek });
+
+    const tasks = await caller.tasks.list();
+    const updated = tasks.find((t) => t.id === created.id);
+    expect(updated?.dueDate).toBe(nextWeek);
+  });
+
+  it("removes a task due date by setting null", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const tomorrow = Date.now() + 24 * 60 * 60 * 1000;
+    const created = await caller.tasks.create({
+      title: "Remove due date task",
+      listType: "must_do",
+      dueDate: tomorrow,
+    });
+
+    await caller.tasks.update({ id: created.id, dueDate: null });
+
+    const tasks = await caller.tasks.list();
+    const updated = tasks.find((t) => t.id === created.id);
+    expect(updated?.dueDate).toBeNull();
+  });
+});
+
 describe("stats.get", () => {
   it("returns user stats", async () => {
     const { ctx } = createAuthContext();

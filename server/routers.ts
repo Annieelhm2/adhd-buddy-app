@@ -79,6 +79,7 @@ export const appRouter = router({
         title: z.string().min(1).max(500),
         description: z.string().max(2000).optional(),
         listType: z.enum(["must_do", "could_do"]),
+        dueDate: z.number().nullable().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         return createTask({
@@ -86,6 +87,7 @@ export const appRouter = router({
           title: input.title,
           description: input.description,
           listType: input.listType,
+          dueDate: input.dueDate,
         });
       }),
 
@@ -96,6 +98,7 @@ export const appRouter = router({
         description: z.string().max(2000).nullable().optional(),
         listType: z.enum(["must_do", "could_do"]).optional(),
         completed: z.boolean().optional(),
+        dueDate: z.number().nullable().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         const { id, ...data } = input;
@@ -195,15 +198,45 @@ export const appRouter = router({
           return t.completedAt >= today;
         });
 
+        // Get subtasks for pending tasks to give buddy full context
+        const allSubtasks = await getSubtasksByUser(ctx.user.id);
+        const subtaskMap = new Map<number, typeof allSubtasks>();
+        for (const st of allSubtasks) {
+          if (!subtaskMap.has(st.taskId)) subtaskMap.set(st.taskId, []);
+          subtaskMap.get(st.taskId)!.push(st);
+        }
+
+        const formatTaskWithDetails = (t: typeof userTasks[0]) => {
+          const parts = [t.title];
+          if (t.dueDate) {
+            const due = new Date(t.dueDate);
+            const now = new Date();
+            const diffMs = due.getTime() - now.getTime();
+            const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+            const dateStr = due.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+            if (diffDays < 0) parts.push(`(OVERDUE by ${Math.abs(diffDays)} day(s), was due ${dateStr})`);
+            else if (diffDays === 0) parts.push(`(DUE TODAY, ${dateStr})`);
+            else if (diffDays === 1) parts.push(`(due TOMORROW, ${dateStr})`);
+            else if (diffDays <= 3) parts.push(`(due in ${diffDays} days, ${dateStr})`);
+            else parts.push(`(due ${dateStr})`);
+          }
+          const subs = subtaskMap.get(t.id) ?? [];
+          if (subs.length > 0) {
+            const completedSubs = subs.filter(s => s.completed).length;
+            parts.push(`[${completedSubs}/${subs.length} subtasks done: ${subs.map(s => `${s.completed ? "✓" : "○"} ${s.title}`).join(", ")}]`);
+          }
+          return parts.join(" ");
+        };
+
         const taskContext = `
 Current task context for this user:
 - Total tasks: ${stats.totalTasks} (${stats.completedTasks} completed)
-- Pending "Must Do" tasks: ${pendingMustDo.map(t => t.title).join(", ") || "None"}
-- Pending "Could Do" tasks: ${pendingCouldDo.map(t => t.title).join(", ") || "None"}
+- Pending "Must Do" tasks:\n${pendingMustDo.length > 0 ? pendingMustDo.map(t => `  • ${formatTaskWithDetails(t)}`).join("\n") : "  None"}
+- Pending "Could Do" tasks:\n${pendingCouldDo.length > 0 ? pendingCouldDo.map(t => `  • ${formatTaskWithDetails(t)}`).join("\n") : "  None"}
 - Tasks completed today: ${completedToday.length}
 - Total subtasks: ${stats.totalSubtasks} (${stats.completedSubtasks} completed)
 
-Use this context to provide personalized, relevant encouragement and advice. Reference their actual tasks when appropriate.`;
+Use this context to provide personalized, relevant encouragement and advice. Reference their actual tasks by name when appropriate. If tasks are overdue or due soon, gently mention them and offer help prioritizing. Always be supportive, never guilt-trip.`;
 
         const messages = [
           { role: "system" as const, content: ADHD_BUDDY_SYSTEM_PROMPT + "\n\n" + taskContext },

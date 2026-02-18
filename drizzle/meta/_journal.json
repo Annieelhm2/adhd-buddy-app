@@ -15,6 +15,13 @@
       "when": 1771443323269,
       "tag": "0001_mean_greymalkin",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1771449399453,
+      "tag": "0002_brief_pete_wisdom",
+      "breakpoints": true
     }
   ]
 }
