@@ -24,3 +24,4 @@
 - [x] Frontend: Proactive check-in messages from buddy
 - [x] Frontend: Loading states and empty states
 - [x] Write vitest tests for server procedures
+- [x] Clean up test data from database (tasks, subtasks, chat messages)
