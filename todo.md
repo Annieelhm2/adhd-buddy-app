@@ -1,0 +1,26 @@
+# ADHD Buddy - Project TODO
+
+- [x] Design warm, ADHD-friendly color theme and typography
+- [x] Database schema: tasks table (must-do / could-do, ordering)
+- [x] Database schema: subtasks table (ordering, parent reference)
+- [x] Database schema: chat messages table (conversation history)
+- [x] Server: tRPC procedures for task CRUD (create, read, update, delete)
+- [x] Server: tRPC procedures for subtask CRUD
+- [x] Server: tRPC procedures for task/subtask reordering
+- [x] Server: tRPC procedure for AI chat with ADHD buddy persona
+- [x] Server: Context-aware LLM responses for tired/overwhelmed/stuck users
+- [x] Server: Task breakdown assistance via LLM
+- [x] Server: Personalized productivity insights from task patterns
+- [x] Frontend: Landing page with sign-in for unauthenticated users
+- [x] Frontend: DashboardLayout with sidebar navigation
+- [x] Frontend: Animated buddy character (SVG/CSS) with expressions
+- [x] Frontend: Must Do task list with add/edit/delete
+- [x] Frontend: Could Do task list with add/edit/delete
+- [x] Frontend: Subtask creation, editing, deletion within tasks
+- [x] Frontend: Drag-and-drop reordering for tasks and subtasks
+- [x] Frontend: Task completion celebrations with animations
+- [x] Frontend: AI Chat page using AIChatBox component
+- [x] Frontend: Encouraging toast notifications
+- [x] Frontend: Proactive check-in messages from buddy
+- [x] Frontend: Loading states and empty states
+- [x] Write vitest tests for server procedures

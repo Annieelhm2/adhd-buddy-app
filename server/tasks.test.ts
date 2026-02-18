@@ -1,0 +1,337 @@
+import { describe, expect, it, vi, beforeEach } from "vitest";
+import { appRouter } from "./routers";
+import type { TrpcContext } from "./_core/context";
+
+type AuthenticatedUser = NonNullable<TrpcContext["user"]>;
+
+function createAuthContext(userId = 1): { ctx: TrpcContext } {
+  const user: AuthenticatedUser = {
+    id: userId,
+    openId: `test-user-${userId}`,
+    email: `test${userId}@example.com`,
+    name: `Test User ${userId}`,
+    loginMethod: "manus",
+    role: "user",
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    lastSignedIn: new Date(),
+  };
+
+  const ctx: TrpcContext = {
+    user,
+    req: {
+      protocol: "https",
+      headers: {},
+    } as TrpcContext["req"],
+    res: {
+      clearCookie: vi.fn(),
+    } as unknown as TrpcContext["res"],
+  };
+
+  return { ctx };
+}
+
+function createUnauthContext(): { ctx: TrpcContext } {
+  const ctx: TrpcContext = {
+    user: null,
+    req: {
+      protocol: "https",
+      headers: {},
+    } as TrpcContext["req"],
+    res: {
+      clearCookie: vi.fn(),
+    } as unknown as TrpcContext["res"],
+  };
+
+  return { ctx };
+}
+
+describe("tasks.create", () => {
+  it("creates a must_do task successfully", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const result = await caller.tasks.create({
+      title: "Test task",
+      listType: "must_do",
+    });
+
+    expect(result).toHaveProperty("id");
+    expect(typeof result.id).toBe("number");
+  });
+
+  it("creates a could_do task successfully", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const result = await caller.tasks.create({
+      title: "Optional task",
+      listType: "could_do",
+    });
+
+    expect(result).toHaveProperty("id");
+    expect(typeof result.id).toBe("number");
+  });
+
+  it("rejects empty title", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    await expect(
+      caller.tasks.create({ title: "", listType: "must_do" })
+    ).rejects.toThrow();
+  });
+
+  it("rejects unauthenticated users", async () => {
+    const { ctx } = createUnauthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    await expect(
+      caller.tasks.create({ title: "Test", listType: "must_do" })
+    ).rejects.toThrow();
+  });
+});
+
+describe("tasks.list", () => {
+  it("returns tasks for authenticated user", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    // Create a task first
+    await caller.tasks.create({ title: "List test task", listType: "must_do" });
+
+    const tasks = await caller.tasks.list();
+    expect(Array.isArray(tasks)).toBe(true);
+    expect(tasks.length).toBeGreaterThan(0);
+
+    const task = tasks.find((t) => t.title === "List test task");
+    expect(task).toBeDefined();
+    expect(task?.listType).toBe("must_do");
+    expect(task?.completed).toBe(false);
+    expect(task?.subtasks).toBeDefined();
+    expect(Array.isArray(task?.subtasks)).toBe(true);
+  });
+
+  it("filters by listType", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    await caller.tasks.create({ title: "Must task", listType: "must_do" });
+    await caller.tasks.create({ title: "Could task", listType: "could_do" });
+
+    const mustTasks = await caller.tasks.list({ listType: "must_do" });
+    const couldTasks = await caller.tasks.list({ listType: "could_do" });
+
+    expect(mustTasks.every((t) => t.listType === "must_do")).toBe(true);
+    expect(couldTasks.every((t) => t.listType === "could_do")).toBe(true);
+  });
+
+  it("rejects unauthenticated users", async () => {
+    const { ctx } = createUnauthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    await expect(caller.tasks.list()).rejects.toThrow();
+  });
+});
+
+describe("tasks.update", () => {
+  it("updates task title", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const created = await caller.tasks.create({
+      title: "Original title",
+      listType: "must_do",
+    });
+
+    const result = await caller.tasks.update({
+      id: created.id,
+      title: "Updated title",
+    });
+
+    expect(result).toEqual({ success: true });
+
+    const tasks = await caller.tasks.list();
+    const updated = tasks.find((t) => t.id === created.id);
+    expect(updated?.title).toBe("Updated title");
+  });
+
+  it("marks task as completed", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const created = await caller.tasks.create({
+      title: "Complete me",
+      listType: "must_do",
+    });
+
+    await caller.tasks.update({ id: created.id, completed: true });
+
+    const tasks = await caller.tasks.list();
+    const completed = tasks.find((t) => t.id === created.id);
+    expect(completed?.completed).toBe(true);
+  });
+});
+
+describe("tasks.delete", () => {
+  it("deletes a task", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const created = await caller.tasks.create({
+      title: "Delete me",
+      listType: "must_do",
+    });
+
+    const result = await caller.tasks.delete({ id: created.id });
+    expect(result).toEqual({ success: true });
+
+    const tasks = await caller.tasks.list();
+    const deleted = tasks.find((t) => t.id === created.id);
+    expect(deleted).toBeUndefined();
+  });
+});
+
+describe("subtasks", () => {
+  it("creates a subtask for a task", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const task = await caller.tasks.create({
+      title: "Parent task",
+      listType: "must_do",
+    });
+
+    const subtask = await caller.subtasks.create({
+      taskId: task.id,
+      title: "Child step",
+    });
+
+    expect(subtask).toHaveProperty("id");
+
+    const tasks = await caller.tasks.list();
+    const parent = tasks.find((t) => t.id === task.id);
+    expect(parent?.subtasks.length).toBeGreaterThan(0);
+    expect(parent?.subtasks.some((s) => s.title === "Child step")).toBe(true);
+  });
+
+  it("updates a subtask", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const task = await caller.tasks.create({
+      title: "Parent for update",
+      listType: "must_do",
+    });
+
+    const subtask = await caller.subtasks.create({
+      taskId: task.id,
+      title: "Original subtask",
+    });
+
+    await caller.subtasks.update({
+      id: subtask.id,
+      title: "Updated subtask",
+      completed: true,
+    });
+
+    const tasks = await caller.tasks.list();
+    const parent = tasks.find((t) => t.id === task.id);
+    const updated = parent?.subtasks.find((s) => s.id === subtask.id);
+    expect(updated?.title).toBe("Updated subtask");
+    expect(updated?.completed).toBe(true);
+  });
+
+  it("deletes a subtask", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const task = await caller.tasks.create({
+      title: "Parent for delete",
+      listType: "must_do",
+    });
+
+    const subtask = await caller.subtasks.create({
+      taskId: task.id,
+      title: "Delete this subtask",
+    });
+
+    await caller.subtasks.delete({ id: subtask.id });
+
+    const tasks = await caller.tasks.list();
+    const parent = tasks.find((t) => t.id === task.id);
+    expect(parent?.subtasks.find((s) => s.id === subtask.id)).toBeUndefined();
+  });
+
+  it("rejects unauthenticated subtask creation", async () => {
+    const { ctx } = createUnauthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    await expect(
+      caller.subtasks.create({ taskId: 1, title: "Test" })
+    ).rejects.toThrow();
+  });
+});
+
+describe("tasks.reorder", () => {
+  it("reorders tasks within a list", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const task1 = await caller.tasks.create({ title: "First", listType: "must_do" });
+    const task2 = await caller.tasks.create({ title: "Second", listType: "must_do" });
+    const task3 = await caller.tasks.create({ title: "Third", listType: "must_do" });
+
+    // Reorder: Third, First, Second
+    const result = await caller.tasks.reorder({
+      listType: "must_do",
+      orderedIds: [task3.id, task1.id, task2.id],
+    });
+
+    expect(result).toEqual({ success: true });
+  });
+});
+
+describe("stats.get", () => {
+  it("returns user stats", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const stats = await caller.stats.get();
+
+    expect(stats).toHaveProperty("totalTasks");
+    expect(stats).toHaveProperty("completedTasks");
+    expect(stats).toHaveProperty("totalSubtasks");
+    expect(stats).toHaveProperty("completedSubtasks");
+    expect(typeof stats.totalTasks).toBe("number");
+    expect(typeof stats.completedTasks).toBe("number");
+  });
+});
+
+describe("chat", () => {
+  it("returns chat messages for authenticated user", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const messages = await caller.chat.messages();
+    expect(Array.isArray(messages)).toBe(true);
+  });
+
+  it("clears chat history", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const result = await caller.chat.clear();
+    expect(result).toEqual({ success: true });
+
+    const messages = await caller.chat.messages();
+    expect(messages.length).toBe(0);
+  });
+
+  it("rejects unauthenticated chat access", async () => {
+    const { ctx } = createUnauthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    await expect(caller.chat.messages()).rejects.toThrow();
+  });
+});
