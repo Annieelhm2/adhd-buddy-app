@@ -11,18 +11,21 @@ import BrainDump from "./pages/BrainDump";
 import Templates from "./pages/Templates";
 import DashboardLayout from "./components/DashboardLayout";
 import { useAuth } from "./_core/hooks/useAuth";
+import { ActionNudgeProvider } from "./contexts/ActionNudgeContext";
 
 function AuthenticatedRoutes() {
   return (
-    <DashboardLayout>
-      <Switch>
-        <Route path="/tasks" component={Tasks} />
-        <Route path="/chat" component={Chat} />
-        <Route path="/brain-dump" component={BrainDump} />
-        <Route path="/templates" component={Templates} />
-        <Route component={NotFound} />
-      </Switch>
-    </DashboardLayout>
+    <ActionNudgeProvider>
+      <DashboardLayout>
+        <Switch>
+          <Route path="/tasks" component={Tasks} />
+          <Route path="/chat" component={Chat} />
+          <Route path="/brain-dump" component={BrainDump} />
+          <Route path="/templates" component={Templates} />
+          <Route component={NotFound} />
+        </Switch>
+      </DashboardLayout>
+    </ActionNudgeProvider>
   );
 }
 
