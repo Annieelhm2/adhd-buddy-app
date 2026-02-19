@@ -25,6 +25,10 @@ import {
   updateBrainDump,
   deleteBrainDump,
   convertBrainDumpToTask,
+  getTemplatesByUser,
+  createTemplate,
+  deleteTemplate,
+  createTaskFromTemplate,
 } from "./db";
 import { invokeLLM } from "./_core/llm";
 
@@ -109,6 +113,29 @@ export const appRouter = router({
       }))
       .mutation(async ({ ctx, input }) => {
         const { id, ...data } = input;
+
+        // Check if this is a task completion to send celebration
+        if (data.completed === true) {
+          const task = await getTaskById(id, ctx.user.id);
+          if (task && !task.completed) {
+            // Task is being completed — send a big celebratory chat message
+            const celebrations = [
+              `🎉🎉🎉 AMAZING! You just completed "${task.title}"! That's a HUGE win! I'm so proud of you — you showed up and got it done. Take a moment to feel good about this!`,
+              `🏆 INCREDIBLE! "${task.title}" is DONE! You crushed it! Every completed task is proof that you CAN do hard things. You're on fire today!`,
+              `🌟 WOW! You finished "${task.title}"! That took real effort and you followed through! This is exactly the kind of momentum that builds great days. Keep it rolling!`,
+              `🎊 YES YES YES! "${task.title}" — COMPLETE! You did the thing! Your brain might try to downplay this, but DON'T let it. This is a real accomplishment and you deserve to celebrate!`,
+              `💪 BOOM! "${task.title}" is officially DONE! You know what that means? You're someone who finishes what they start. That's powerful. What an awesome achievement!`,
+              `🥳 TASK COMPLETE: "${task.title}"! I literally can't stop smiling! You took something from your to-do list and made it DONE. That's not small — that's everything!`,
+            ];
+            const celebration = celebrations[Math.floor(Math.random() * celebrations.length)];
+            try {
+              await saveChatMessage({ userId: ctx.user.id, role: "assistant", content: celebration });
+            } catch (e) {
+              console.error("[Chat] Failed to save task celebration:", e);
+            }
+          }
+        }
+
         await updateTask(id, ctx.user.id, data);
         return { success: true };
       }),
@@ -153,9 +180,28 @@ export const appRouter = router({
         title: z.string().min(1).max(500).optional(),
         completed: z.boolean().optional(),
         dueDate: z.number().nullable().optional(),
+        subtaskTitle: z.string().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
-        const { id, ...data } = input;
+        const { id, subtaskTitle, ...data } = input;
+
+        // Send celebratory chat message when subtask is completed
+        if (data.completed === true && subtaskTitle) {
+          const celebrations = [
+            `✅ Nice! You finished "${subtaskTitle}"! One step closer to the finish line — keep that momentum going!`,
+            `⭐ "${subtaskTitle}" — done! Every small step counts, and you just took one. You're making real progress!`,
+            `👏 Way to go! "${subtaskTitle}" is checked off! That's the power of breaking things down — you're proving it works!`,
+            `🚀 Subtask complete: "${subtaskTitle}"! You're chipping away at it like a pro. Keep going, you've got this!`,
+            `✨ "${subtaskTitle}" — DONE! See? You're totally capable of this. One step at a time, and you're getting there!`,
+          ];
+          const celebration = celebrations[Math.floor(Math.random() * celebrations.length)];
+          try {
+            await saveChatMessage({ userId: ctx.user.id, role: "assistant", content: celebration });
+          } catch (e) {
+            console.error("[Chat] Failed to save subtask celebration:", e);
+          }
+        }
+
         await updateSubtask(id, ctx.user.id, data);
         return { success: true };
       }),
@@ -400,6 +446,40 @@ Use this context to provide personalized, relevant encouragement and advice. Ref
       .mutation(async ({ ctx, input }) => {
         const result = await convertBrainDumpToTask(input.id, ctx.user.id, input.listType);
         return result;
+      }),
+  }),
+
+  templates: router({
+    list: protectedProcedure.query(async ({ ctx }) => {
+      return getTemplatesByUser(ctx.user.id);
+    }),
+
+    create: protectedProcedure
+      .input(z.object({
+        title: z.string().min(1).max(500),
+        listType: z.enum(["must_do", "could_do"]),
+        subtaskTitles: z.array(z.string().min(1).max(500)),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        return createTemplate({
+          userId: ctx.user.id,
+          title: input.title,
+          listType: input.listType,
+          subtaskTitles: input.subtaskTitles,
+        });
+      }),
+
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        await deleteTemplate(input.id, ctx.user.id);
+        return { success: true };
+      }),
+
+    useTemplate: protectedProcedure
+      .input(z.object({ templateId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        return createTaskFromTemplate(input.templateId, ctx.user.id);
       }),
   }),
 

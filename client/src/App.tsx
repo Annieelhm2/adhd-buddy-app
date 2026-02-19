@@ -8,6 +8,7 @@ import Home from "./pages/Home";
 import Tasks from "./pages/Tasks";
 import Chat from "./pages/Chat";
 import BrainDump from "./pages/BrainDump";
+import Templates from "./pages/Templates";
 import DashboardLayout from "./components/DashboardLayout";
 import { useAuth } from "./_core/hooks/useAuth";
 
@@ -18,6 +19,7 @@ function AuthenticatedRoutes() {
         <Route path="/tasks" component={Tasks} />
         <Route path="/chat" component={Chat} />
         <Route path="/brain-dump" component={BrainDump} />
+        <Route path="/templates" component={Templates} />
         <Route component={NotFound} />
       </Switch>
     </DashboardLayout>
@@ -37,6 +39,9 @@ function Router() {
         <AuthenticatedRoutes />
       </Route>
       <Route path="/brain-dump">
+        <AuthenticatedRoutes />
+      </Route>
+      <Route path="/templates">
         <AuthenticatedRoutes />
       </Route>
       <Route path="/404" component={NotFound} />

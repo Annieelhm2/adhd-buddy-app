@@ -86,3 +86,31 @@ export const brainDumps = mysqlTable("brainDumps", {
 
 export type BrainDump = typeof brainDumps.$inferSelect;
 export type InsertBrainDump = typeof brainDumps.$inferInsert;
+
+/**
+ * Task templates - pre-saved task + subtask combos for quick reuse.
+ */
+export const taskTemplates = mysqlTable("taskTemplates", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  title: varchar("title", { length: 500 }).notNull(),
+  listType: mysqlEnum("listType", ["must_do", "could_do"]).notNull().default("must_do"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type TaskTemplate = typeof taskTemplates.$inferSelect;
+export type InsertTaskTemplate = typeof taskTemplates.$inferInsert;
+
+/**
+ * Template subtasks - subtask definitions within a template.
+ */
+export const templateSubtasks = mysqlTable("templateSubtasks", {
+  id: int("id").autoincrement().primaryKey(),
+  templateId: int("templateId").notNull(),
+  title: varchar("title", { length: 500 }).notNull(),
+  sortOrder: int("sortOrder").notNull().default(0),
+});
+
+export type TemplateSubtask = typeof templateSubtasks.$inferSelect;
+export type InsertTemplateSubtask = typeof templateSubtasks.$inferInsert;

@@ -82,7 +82,11 @@ export function SubtaskItem({ subtask, taskId, onCelebrate }: SubtaskItemProps) 
 
   const handleToggle = () => {
     const newCompleted = !subtask.completed;
-    updateSubtask.mutate({ id: subtask.id, completed: newCompleted });
+    updateSubtask.mutate({
+      id: subtask.id,
+      completed: newCompleted,
+      subtaskTitle: newCompleted ? subtask.title : undefined,
+    });
     if (newCompleted) {
       onCelebrate();
       const celebration = SUBTASK_CELEBRATIONS[Math.floor(Math.random() * SUBTASK_CELEBRATIONS.length)];

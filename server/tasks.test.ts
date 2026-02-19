@@ -628,3 +628,95 @@ describe("brainDump", () => {
     await expect(caller.brainDump.list()).rejects.toThrow();
   });
 });
+
+describe("templates", () => {
+  it("creates a template with subtasks", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const result = await caller.templates.create({
+      title: "Morning Routine",
+      listType: "must_do",
+      subtaskTitles: ["Brush teeth", "Make bed", "Eat breakfast"],
+    });
+
+    expect(result).toHaveProperty("id");
+
+    const templates = await caller.templates.list();
+    const tmpl = templates.find((t) => t.id === result.id);
+    expect(tmpl).toBeDefined();
+    expect(tmpl?.title).toBe("Morning Routine");
+    expect(tmpl?.listType).toBe("must_do");
+    expect(tmpl?.subtasks).toHaveLength(3);
+    expect(tmpl?.subtasks[0]?.title).toBe("Brush teeth");
+    expect(tmpl?.subtasks[1]?.title).toBe("Make bed");
+    expect(tmpl?.subtasks[2]?.title).toBe("Eat breakfast");
+  });
+
+  it("creates a template without subtasks", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const result = await caller.templates.create({
+      title: "Quick Task",
+      listType: "could_do",
+      subtaskTitles: [],
+    });
+
+    expect(result).toHaveProperty("id");
+
+    const templates = await caller.templates.list();
+    const tmpl = templates.find((t) => t.id === result.id);
+    expect(tmpl).toBeDefined();
+    expect(tmpl?.title).toBe("Quick Task");
+    expect(tmpl?.subtasks).toHaveLength(0);
+  });
+
+  it("uses a template to create a task with subtasks", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const tmplResult = await caller.templates.create({
+      title: "Weekly Review",
+      listType: "must_do",
+      subtaskTitles: ["Review goals", "Plan next week"],
+    });
+
+    const useResult = await caller.templates.useTemplate({
+      templateId: tmplResult.id,
+    });
+
+    expect(useResult).toHaveProperty("taskId");
+    expect(useResult.subtaskCount).toBe(2);
+
+    const tasks = await caller.tasks.list({ listType: "must_do" });
+    const task = tasks.find((t) => t.id === useResult.taskId);
+    expect(task).toBeDefined();
+    expect(task?.title).toBe("Weekly Review");
+    expect(task?.subtasks).toHaveLength(2);
+  });
+
+  it("deletes a template", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const result = await caller.templates.create({
+      title: "To Delete",
+      listType: "could_do",
+      subtaskTitles: ["Step 1"],
+    });
+
+    await caller.templates.delete({ id: result.id });
+
+    const templates = await caller.templates.list();
+    const tmpl = templates.find((t) => t.id === result.id);
+    expect(tmpl).toBeUndefined();
+  });
+
+  it("rejects unauthenticated access", async () => {
+    const { ctx } = createUnauthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    await expect(caller.templates.list()).rejects.toThrow();
+  });
+});

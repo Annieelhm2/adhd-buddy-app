@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { getLoginUrl } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { ListTodo, MessageCircle, Brain, LogOut, PanelLeft } from "lucide-react";
+import { ListTodo, MessageCircle, Brain, LogOut, PanelLeft, LayoutTemplate } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from "./DashboardLayoutSkeleton";
@@ -30,6 +30,7 @@ import { BuddyCharacter } from "./BuddyCharacter";
 
 const menuItems = [
   { icon: ListTodo, label: "My Tasks", path: "/tasks" },
+  { icon: LayoutTemplate, label: "Templates", path: "/templates" },
   { icon: Brain, label: "Brain Dump", path: "/brain-dump" },
   { icon: MessageCircle, label: "Chat with Buddy", path: "/chat" },
 ];

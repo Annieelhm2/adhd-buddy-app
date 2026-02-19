@@ -54,3 +54,12 @@
 - [x] Add gentle "go take action" nudges to discourage over-using the app
 - [x] Update ADHD Buddy chat persona to encourage action over planning
 - [x] Update tests for subtask dueDate functionality
+- [x] Database schema: task_templates table (title, listType, subtask names)
+- [x] Server: tRPC procedures for template CRUD (create, list, delete)
+- [x] Server: tRPC procedure to create task from template (with all subtasks)
+- [x] Frontend: Templates page with create/view/delete templates
+- [x] Frontend: "Use Template" button in TaskList to quickly add from templates
+- [x] Frontend: Add navigation item for Templates in sidebar
+- [x] Send celebratory message in chat when subtask is completed
+- [x] Write tests for template procedures
+- [x] Add big celebratory message in chat when a full task is completed

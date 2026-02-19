@@ -1,6 +1,6 @@
 import { and, asc, desc, eq, isNull, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, tasks, subtasks, chatMessages, brainDumps, type Task, type Subtask } from "../drizzle/schema";
+import { InsertUser, users, tasks, subtasks, chatMessages, brainDumps, taskTemplates, templateSubtasks, type Task, type Subtask } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -446,4 +446,110 @@ export async function getUserStats(userId: number) {
     totalSubtasks: Number(subtaskStats[0]?.total ?? 0),
     completedSubtasks: Number(subtaskStats[0]?.completed ?? 0),
   };
+}
+
+// ==================== TEMPLATE QUERIES ====================
+
+export async function getTemplatesByUser(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const tmpls = await db
+    .select()
+    .from(taskTemplates)
+    .where(eq(taskTemplates.userId, userId))
+    .orderBy(desc(taskTemplates.createdAt));
+
+  // Fetch subtasks for each template
+  const results = [];
+  for (const tmpl of tmpls) {
+    const subs = await db
+      .select()
+      .from(templateSubtasks)
+      .where(eq(templateSubtasks.templateId, tmpl.id))
+      .orderBy(asc(templateSubtasks.sortOrder));
+    results.push({ ...tmpl, subtasks: subs });
+  }
+
+  return results;
+}
+
+export async function createTemplate(data: {
+  userId: number;
+  title: string;
+  listType: "must_do" | "could_do";
+  subtaskTitles: string[];
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.insert(taskTemplates).values({
+    userId: data.userId,
+    title: data.title,
+    listType: data.listType,
+  });
+
+  const templateId = Number(result[0].insertId);
+
+  // Insert template subtasks
+  for (let i = 0; i < data.subtaskTitles.length; i++) {
+    if (data.subtaskTitles[i].trim()) {
+      await db.insert(templateSubtasks).values({
+        templateId,
+        title: data.subtaskTitles[i].trim(),
+        sortOrder: i,
+      });
+    }
+  }
+
+  return { id: templateId };
+}
+
+export async function deleteTemplate(templateId: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Delete template subtasks first
+  await db.delete(templateSubtasks).where(eq(templateSubtasks.templateId, templateId));
+  // Delete the template
+  await db.delete(taskTemplates).where(and(eq(taskTemplates.id, templateId), eq(taskTemplates.userId, userId)));
+}
+
+export async function createTaskFromTemplate(templateId: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Get the template
+  const tmpls = await db
+    .select()
+    .from(taskTemplates)
+    .where(and(eq(taskTemplates.id, templateId), eq(taskTemplates.userId, userId)))
+    .limit(1);
+
+  if (tmpls.length === 0) throw new Error("Template not found");
+  const tmpl = tmpls[0];
+
+  // Create the task
+  const taskResult = await createTask({
+    userId,
+    title: tmpl.title,
+    listType: tmpl.listType,
+  });
+
+  // Get template subtasks and create real subtasks
+  const subs = await db
+    .select()
+    .from(templateSubtasks)
+    .where(eq(templateSubtasks.templateId, templateId))
+    .orderBy(asc(templateSubtasks.sortOrder));
+
+  for (const sub of subs) {
+    await createSubtask({
+      taskId: taskResult.id,
+      userId,
+      title: sub.title,
+    });
+  }
+
+  return { taskId: taskResult.id, subtaskCount: subs.length };
 }
