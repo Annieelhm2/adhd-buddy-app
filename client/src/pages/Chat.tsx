@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { useActionNudge } from "@/hooks/useActionNudge";
+import { ActionNudgeBanner } from "@/components/ActionNudgeBanner";
 
 const SYSTEM_MESSAGE: Message = {
   role: "system",
@@ -144,8 +146,18 @@ export default function Chat() {
     );
   }
 
+  const { showNudge, nudgeMessage, dismissNudge } = useActionNudge();
+
   return (
     <div className="max-w-3xl mx-auto space-y-3 sm:space-y-4">
+      {/* Action nudge */}
+      <ActionNudgeBanner
+        show={showNudge}
+        message={nudgeMessage}
+        onDismiss={dismissNudge}
+        contextLine="Chatting is fun, but action is where the magic happens! Go start something!"
+      />
+
       {/* Buddy with mood */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">

@@ -67,3 +67,4 @@
 - [x] Frontend: Inline edit/delete for template subtasks
 - [x] Frontend: Drag-and-drop reorder for template subtasks
 - [x] Tests for template update procedure
+- [x] Fix: Add "go take action" nudge to all pages (Templates, Brain Dump, Chat), not just Tasks

@@ -33,6 +33,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { useState, useCallback } from "react";
+import { useActionNudge } from "@/hooks/useActionNudge";
+import { ActionNudgeBanner } from "@/components/ActionNudgeBanner";
 import {
   Plus,
   Trash2,
@@ -557,12 +559,22 @@ export default function Templates() {
   const buddyMessage =
     BUDDY_MESSAGES[Math.floor(Math.random() * BUDDY_MESSAGES.length)];
 
+  const { showNudge, nudgeMessage, dismissNudge } = useActionNudge();
+
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       {/* Header with buddy */}
       <div className="flex flex-col items-center gap-2 pt-2 pb-4">
         <BuddyCharacter mood="happy" size={90} message={buddyMessage} />
       </div>
+
+      {/* Action nudge */}
+      <ActionNudgeBanner
+        show={showNudge}
+        message={nudgeMessage}
+        onDismiss={dismissNudge}
+        contextLine="Templates are set up — now go tackle your tasks! The app is a tool, not a destination!"
+      />
 
       {/* Title + Create button */}
       <div className="flex items-center justify-between gap-4">

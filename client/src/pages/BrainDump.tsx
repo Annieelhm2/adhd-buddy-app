@@ -27,6 +27,8 @@ import {
   Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useActionNudge } from "@/hooks/useActionNudge";
+import { ActionNudgeBanner } from "@/components/ActionNudgeBanner";
 
 const COLOR_OPTIONS = [
   { value: "default", label: "Default", bg: "bg-card", border: "border-border" },
@@ -132,12 +134,22 @@ export default function BrainDump() {
     );
   }
 
+  const { showNudge, nudgeMessage, dismissNudge } = useActionNudge();
+
   return (
     <div className="space-y-6 sm:space-y-8 max-w-3xl mx-auto">
       {/* Buddy section */}
       <div className="flex justify-center pt-1 sm:pt-2">
         <BuddyCharacter mood="thinking" size={80} message={buddyMessage} />
       </div>
+
+      {/* Action nudge */}
+      <ActionNudgeBanner
+        show={showNudge}
+        message={nudgeMessage}
+        onDismiss={dismissNudge}
+        contextLine="Brain dump is great for capturing ideas — now pick one and go make it happen!"
+      />
 
       {/* Quick capture input */}
       <div className="bg-card border rounded-2xl p-4 shadow-sm">
