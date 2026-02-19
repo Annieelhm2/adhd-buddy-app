@@ -713,6 +713,85 @@ describe("templates", () => {
     expect(tmpl).toBeUndefined();
   });
 
+  it("updates a template title and list type", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const result = await caller.templates.create({
+      title: "Original Title",
+      listType: "must_do",
+      subtaskTitles: ["Step A"],
+    });
+
+    await caller.templates.update({
+      id: result.id,
+      title: "Updated Title",
+      listType: "could_do",
+    });
+
+    const templates = await caller.templates.list();
+    const tmpl = templates.find((t) => t.id === result.id);
+    expect(tmpl).toBeDefined();
+    expect(tmpl?.title).toBe("Updated Title");
+    expect(tmpl?.listType).toBe("could_do");
+  });
+
+  it("updates template subtasks (reorder, edit, delete)", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const result = await caller.templates.create({
+      title: "Editable Template",
+      listType: "must_do",
+      subtaskTitles: ["Step 1", "Step 2", "Step 3"],
+    });
+
+    // Verify initial subtasks
+    let templates = await caller.templates.list();
+    let tmpl = templates.find((t) => t.id === result.id);
+    expect(tmpl?.subtasks).toHaveLength(3);
+
+    // Update: reorder, edit one, delete one (send only 2 back in new order)
+    await caller.templates.update({
+      id: result.id,
+      subtasks: [
+        { title: "Step 3 Edited" },
+        { title: "Step 1" },
+      ],
+    });
+
+    templates = await caller.templates.list();
+    tmpl = templates.find((t) => t.id === result.id);
+    expect(tmpl?.subtasks).toHaveLength(2);
+    expect(tmpl?.subtasks[0]?.title).toBe("Step 3 Edited");
+    expect(tmpl?.subtasks[1]?.title).toBe("Step 1");
+  });
+
+  it("adds new subtasks to a template via update", async () => {
+    const { ctx } = createAuthContext();
+    const caller = appRouter.createCaller(ctx);
+
+    const result = await caller.templates.create({
+      title: "Grow Template",
+      listType: "could_do",
+      subtaskTitles: ["Original Step"],
+    });
+
+    await caller.templates.update({
+      id: result.id,
+      subtasks: [
+        { title: "Original Step" },
+        { title: "New Step 2" },
+        { title: "New Step 3" },
+      ],
+    });
+
+    const templates = await caller.templates.list();
+    const tmpl = templates.find((t) => t.id === result.id);
+    expect(tmpl?.subtasks).toHaveLength(3);
+    expect(tmpl?.subtasks[2]?.title).toBe("New Step 3");
+  });
+
   it("rejects unauthenticated access", async () => {
     const { ctx } = createUnauthContext();
     const caller = appRouter.createCaller(ctx);

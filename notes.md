@@ -1,3 +1,5 @@
-# Mobile UI Improvement Status
-
-All mobile UI improvements complete. No TypeScript errors. Need to mark todo items and save checkpoint.
+# Current State
+- Templates page rewritten with inline edit/delete/reorder for subtasks
+- No TypeScript errors, app compiles and runs
+- Need to write tests for the template update procedure
+- Then checkpoint and deliver

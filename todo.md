@@ -63,3 +63,7 @@
 - [x] Send celebratory message in chat when subtask is completed
 - [x] Write tests for template procedures
 - [x] Add big celebratory message in chat when a full task is completed
+- [x] Server: Add update procedure for template (edit title, reorder/edit/delete subtasks)
+- [x] Frontend: Inline edit/delete for template subtasks
+- [x] Frontend: Drag-and-drop reorder for template subtasks
+- [x] Tests for template update procedure

@@ -27,6 +27,7 @@ import {
   convertBrainDumpToTask,
   getTemplatesByUser,
   createTemplate,
+  updateTemplate,
   deleteTemplate,
   createTaskFromTemplate,
 } from "./db";
@@ -467,6 +468,21 @@ Use this context to provide personalized, relevant encouragement and advice. Ref
           listType: input.listType,
           subtaskTitles: input.subtaskTitles,
         });
+      }),
+
+    update: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        title: z.string().min(1).max(500).optional(),
+        listType: z.enum(["must_do", "could_do"]).optional(),
+        subtasks: z.array(z.object({
+          id: z.number().optional(),
+          title: z.string().min(1).max(500),
+        })).optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { id, ...data } = input;
+        return updateTemplate(id, ctx.user.id, data);
       }),
 
     delete: protectedProcedure

@@ -553,3 +553,53 @@ export async function createTaskFromTemplate(templateId: number, userId: number)
 
   return { taskId: taskResult.id, subtaskCount: subs.length };
 }
+
+export async function updateTemplate(templateId: number, userId: number, data: {
+  title?: string;
+  listType?: "must_do" | "could_do";
+  subtasks?: { id?: number; title: string }[];
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Verify ownership
+  const tmpls = await db
+    .select()
+    .from(taskTemplates)
+    .where(and(eq(taskTemplates.id, templateId), eq(taskTemplates.userId, userId)))
+    .limit(1);
+
+  if (tmpls.length === 0) throw new Error("Template not found");
+
+  // Update template fields
+  const updateSet: Record<string, unknown> = {};
+  if (data.title !== undefined) updateSet.title = data.title;
+  if (data.listType !== undefined) updateSet.listType = data.listType;
+
+  if (Object.keys(updateSet).length > 0) {
+    await db
+      .update(taskTemplates)
+      .set(updateSet)
+      .where(and(eq(taskTemplates.id, templateId), eq(taskTemplates.userId, userId)));
+  }
+
+  // If subtasks are provided, replace all subtasks with the new list
+  if (data.subtasks !== undefined) {
+    // Delete all existing subtasks
+    await db.delete(templateSubtasks).where(eq(templateSubtasks.templateId, templateId));
+
+    // Insert new subtasks in order
+    for (let i = 0; i < data.subtasks.length; i++) {
+      const sub = data.subtasks[i];
+      if (sub.title.trim()) {
+        await db.insert(templateSubtasks).values({
+          templateId,
+          title: sub.title.trim(),
+          sortOrder: i,
+        });
+      }
+    }
+  }
+
+  return { success: true };
+}
