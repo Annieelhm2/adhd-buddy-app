@@ -68,3 +68,4 @@
 - [x] Frontend: Drag-and-drop reorder for template subtasks
 - [x] Tests for template update procedure
 - [x] Fix: Add "go take action" nudge to all pages (Templates, Brain Dump, Chat), not just Tasks
+- [x] Fix: React hooks order error in BrainDump - useActionNudge called after early return

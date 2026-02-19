@@ -118,6 +118,8 @@ export default function BrainDump() {
     () => BUDDY_MESSAGES[Math.floor(Math.random() * BUDDY_MESSAGES.length)]
   );
 
+  const { showNudge, nudgeMessage, dismissNudge } = useActionNudge();
+
   if (isLoading) {
     return (
       <div className="space-y-6 max-w-3xl mx-auto">
@@ -133,8 +135,6 @@ export default function BrainDump() {
       </div>
     );
   }
-
-  const { showNudge, nudgeMessage, dismissNudge } = useActionNudge();
 
   return (
     <div className="space-y-6 sm:space-y-8 max-w-3xl mx-auto">

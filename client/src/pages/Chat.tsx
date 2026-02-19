@@ -135,6 +135,8 @@ export default function Chat() {
     return undefined;
   }, [sendMessage.isPending, messages.length]);
 
+  const { showNudge, nudgeMessage, dismissNudge } = useActionNudge();
+
   if (historyLoading) {
     return (
       <div className="space-y-4 max-w-3xl mx-auto">
@@ -145,8 +147,6 @@ export default function Chat() {
       </div>
     );
   }
-
-  const { showNudge, nudgeMessage, dismissNudge } = useActionNudge();
 
   return (
     <div className="max-w-3xl mx-auto space-y-3 sm:space-y-4">
