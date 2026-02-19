@@ -4,16 +4,15 @@ import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { ActionNudgeProvider } from "./contexts/ActionNudgeContext";
 import Home from "./pages/Home";
 import Tasks from "./pages/Tasks";
 import Chat from "./pages/Chat";
 import BrainDump from "./pages/BrainDump";
 import Templates from "./pages/Templates";
 import DashboardLayout from "./components/DashboardLayout";
-import { useAuth } from "./_core/hooks/useAuth";
-import { ActionNudgeProvider } from "./contexts/ActionNudgeContext";
 
-function AuthenticatedRoutes() {
+function AuthenticatedApp() {
   return (
     <ActionNudgeProvider>
       <DashboardLayout>
@@ -30,25 +29,13 @@ function AuthenticatedRoutes() {
 }
 
 function Router() {
-  const { isAuthenticated, loading } = useAuth();
-
   return (
     <Switch>
       <Route path="/" component={Home} />
-      <Route path="/tasks">
-        <AuthenticatedRoutes />
+      {/* Single wrapper for all authenticated routes — keeps ActionNudgeProvider alive across navigation */}
+      <Route>
+        <AuthenticatedApp />
       </Route>
-      <Route path="/chat">
-        <AuthenticatedRoutes />
-      </Route>
-      <Route path="/brain-dump">
-        <AuthenticatedRoutes />
-      </Route>
-      <Route path="/templates">
-        <AuthenticatedRoutes />
-      </Route>
-      <Route path="/404" component={NotFound} />
-      <Route component={NotFound} />
     </Switch>
   );
 }
