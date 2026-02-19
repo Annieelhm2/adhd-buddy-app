@@ -72,3 +72,4 @@
 - [x] Fix: Make action nudge state global so it persists across page navigation
 - [x] Restart nudge timer on activity (clicks, typing) after user dismisses — NOT on navigation
 - [x] Fix: Action nudge banner not showing up at all (restructured routing so ActionNudgeProvider doesn't remount)
+- [x] Add toggle to hide/show completed tasks on the Tasks page

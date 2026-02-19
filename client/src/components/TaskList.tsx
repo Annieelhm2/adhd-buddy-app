@@ -16,7 +16,7 @@ import {
 } from "@dnd-kit/sortable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, ListChecks, Sparkles } from "lucide-react";
+import { Plus, ListChecks, Sparkles, Eye, EyeOff } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { TaskItem } from "./TaskItem";
@@ -54,6 +54,7 @@ export function TaskList({
 }: TaskListProps) {
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [showAdd, setShowAdd] = useState(false);
+  const [hideCompleted, setHideCompleted] = useState(false);
   const utils = trpc.useUtils();
 
   const createTask = trpc.tasks.create.useMutation({
@@ -234,20 +235,42 @@ export function TaskList({
           {/* Completed tasks */}
           {completedTasks.length > 0 && (
             <div className="mt-4">
-              <p className="text-sm sm:text-xs text-muted-foreground mb-2 flex items-center gap-1">
+              <button
+                onClick={() => setHideCompleted(!hideCompleted)}
+                className="text-sm sm:text-xs text-muted-foreground mb-2 flex items-center gap-1.5 hover:text-foreground transition-colors cursor-pointer"
+              >
+                {hideCompleted ? (
+                  <EyeOff className="h-3.5 w-3.5 sm:h-3 sm:w-3" />
+                ) : (
+                  <Eye className="h-3.5 w-3.5 sm:h-3 sm:w-3" />
+                )}
                 <Sparkles className="h-3.5 w-3.5 sm:h-3 sm:w-3" />
                 Completed ({completedTasks.length})
-              </p>
-              <div className="space-y-2 sm:space-y-1.5">
-                {completedTasks.map((task) => (
-                  <TaskItem
-                    key={task.id}
-                    task={task}
-                    onComplete={handleComplete}
-                    onCelebrate={onCelebrate}
-                  />
-                ))}
-              </div>
+                <span className="text-xs opacity-70">
+                  {hideCompleted ? "— tap to show" : "— tap to hide"}
+                </span>
+              </button>
+              <AnimatePresence>
+                {!hideCompleted && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="space-y-2 sm:space-y-1.5">
+                      {completedTasks.map((task) => (
+                        <TaskItem
+                          key={task.id}
+                          task={task}
+                          onComplete={handleComplete}
+                          onCelebrate={onCelebrate}
+                        />
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           )}
         </div>
