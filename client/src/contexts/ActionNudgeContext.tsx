@@ -25,35 +25,70 @@ export function ActionNudgeProvider({ children }: { children: ReactNode }) {
   const [showNudge, setShowNudge] = useState(false);
   const [nudgeMessage, setNudgeMessage] = useState("");
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const dismissedRef = useRef(false);
+  // "idle" = initial, "active" = timer running, "dismissed" = user clicked Got it, "listening" = waiting for activity to restart
+  const stateRef = useRef<"idle" | "active" | "dismissed" | "listening">("idle");
+  const activityListenerAttached = useRef(false);
 
-  useEffect(() => {
-    // Start the global timer once when the provider mounts (app load)
+  const startTimer = useCallback(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    stateRef.current = "active";
     timerRef.current = setTimeout(() => {
-      if (!dismissedRef.current) {
-        setNudgeMessage(
-          ACTION_NUDGES[Math.floor(Math.random() * ACTION_NUDGES.length)]
-        );
-        setShowNudge(true);
-      }
+      setNudgeMessage(
+        ACTION_NUDGES[Math.floor(Math.random() * ACTION_NUDGES.length)]
+      );
+      setShowNudge(true);
     }, NUDGE_DELAY_MS);
+  }, []);
 
+  const onActivity = useCallback(() => {
+    // Only restart if we're in "listening" state (after a dismiss)
+    if (stateRef.current !== "listening") return;
+    // Detach listeners and restart the timer
+    removeActivityListeners();
+    activityListenerAttached.current = false;
+    startTimer();
+  }, [startTimer]);
+
+  const attachActivityListeners = useCallback(() => {
+    if (activityListenerAttached.current) return;
+    activityListenerAttached.current = true;
+    // Listen for clicks, typing, touch, and scroll — real user interactions, NOT navigation
+    document.addEventListener("click", onActivity, { once: true, capture: true });
+    document.addEventListener("keydown", onActivity, { once: true, capture: true });
+    document.addEventListener("touchstart", onActivity, { once: true, capture: true });
+    document.addEventListener("scroll", onActivity, { once: true, capture: true });
+  }, [onActivity]);
+
+  const removeActivityListeners = useCallback(() => {
+    document.removeEventListener("click", onActivity, { capture: true } as EventListenerOptions);
+    document.removeEventListener("keydown", onActivity, { capture: true } as EventListenerOptions);
+    document.removeEventListener("touchstart", onActivity, { capture: true } as EventListenerOptions);
+    document.removeEventListener("scroll", onActivity, { capture: true } as EventListenerOptions);
+  }, [onActivity]);
+
+  // Start the initial timer on mount
+  useEffect(() => {
+    startTimer();
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
+      removeActivityListeners();
     };
-  }, []);
+  }, [startTimer, removeActivityListeners]);
 
   const dismissNudge = useCallback(() => {
     setShowNudge(false);
-    dismissedRef.current = true;
-  }, []);
+    stateRef.current = "listening";
+    // After dismiss, wait for real activity (click/type/touch/scroll) to restart the timer
+    attachActivityListeners();
+  }, [attachActivityListeners]);
 
   const resetNudge = useCallback(() => {
-    // Used when user completes a task — dismiss and prevent future nudges
+    // Used when user completes a task — dismiss and prevent future nudges temporarily
     setShowNudge(false);
-    dismissedRef.current = true;
+    stateRef.current = "listening";
     if (timerRef.current) clearTimeout(timerRef.current);
-  }, []);
+    attachActivityListeners();
+  }, [attachActivityListeners]);
 
   return (
     <ActionNudgeContext.Provider value={{ showNudge, nudgeMessage, dismissNudge, resetNudge }}>

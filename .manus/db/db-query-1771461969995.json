@@ -1,0 +1,9 @@
+{
+  "query": "DELETE FROM templateSubtasks; DELETE FROM taskTemplates; DELETE FROM subtasks; DELETE FROM chatMessages; DELETE FROM tasks; DELETE FROM brainDumps;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 3R5GLPr7Loi1QYQ.a5d7f40a89d5 --database Ab5r5XCkzUsEMYcjW6dUqj --execute DELETE FROM templateSubtasks; DELETE FROM taskTemplates; DELETE FROM subtasks; DELETE FROM chatMessages; DELETE FROM tasks; DELETE FROM brainDumps;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 673
+}
