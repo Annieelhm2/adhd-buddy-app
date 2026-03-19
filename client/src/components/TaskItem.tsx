@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
-import { SubtaskItem } from "./SubtaskItem";
+import { NestedSubtaskItem } from "./NestedSubtaskItem";
 import {
   DndContext,
   closestCenter,
@@ -54,6 +54,7 @@ interface TaskItemProps {
       completed: boolean;
       sortOrder: number;
       dueDate: number | null;
+      parentSubtaskId: number | null;
     }>;
   };
   onComplete: (taskId: number, completed: boolean) => void;
@@ -466,7 +467,7 @@ export function TaskItem({ task, onComplete, onCelebrate }: TaskItemProps) {
                     strategy={verticalListSortingStrategy}
                   >
                     {task.subtasks.map((subtask) => (
-                      <SubtaskItem
+                      <NestedSubtaskItem
                         key={subtask.id}
                         subtask={subtask}
                         taskId={task.id}

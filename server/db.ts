@@ -206,10 +206,23 @@ export async function getSubtasksByTask(taskId: number, userId: number) {
   const db = await getDb();
   if (!db) return [];
 
+  // Only return top-level subtasks (parentSubtaskId is null)
   return db
     .select()
     .from(subtasks)
-    .where(and(eq(subtasks.taskId, taskId), eq(subtasks.userId, userId)))
+    .where(and(eq(subtasks.taskId, taskId), eq(subtasks.userId, userId), isNull(subtasks.parentSubtaskId)))
+    .orderBy(asc(subtasks.sortOrder), asc(subtasks.createdAt));
+}
+
+export async function getNestedSubtasksByParent(parentSubtaskId: number, userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  // Return all nested subtasks for a given parent
+  return db
+    .select()
+    .from(subtasks)
+    .where(and(eq(subtasks.parentSubtaskId, parentSubtaskId), eq(subtasks.userId, userId)))
     .orderBy(asc(subtasks.sortOrder), asc(subtasks.createdAt));
 }
 
@@ -229,14 +242,23 @@ export async function createSubtask(data: {
   userId: number;
   title: string;
   dueDate?: number | null;
+  parentSubtaskId?: number | null;
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
+  // Get max sort order for this parent (or top-level if no parent)
+  const conditions = [eq(subtasks.taskId, data.taskId), eq(subtasks.userId, data.userId)];
+  if (data.parentSubtaskId) {
+    conditions.push(eq(subtasks.parentSubtaskId, data.parentSubtaskId));
+  } else {
+    conditions.push(isNull(subtasks.parentSubtaskId));
+  }
+
   const existing = await db
     .select({ maxOrder: sql<number>`COALESCE(MAX(${subtasks.sortOrder}), -1)` })
     .from(subtasks)
-    .where(and(eq(subtasks.taskId, data.taskId), eq(subtasks.userId, data.userId)));
+    .where(and(...conditions));
 
   const nextOrder = (existing[0]?.maxOrder ?? -1) + 1;
 
@@ -244,6 +266,7 @@ export async function createSubtask(data: {
     taskId: data.taskId,
     userId: data.userId,
     title: data.title,
+    parentSubtaskId: data.parentSubtaskId ?? null,
     sortOrder: nextOrder,
     dueDate: data.dueDate ?? null,
   });
@@ -282,15 +305,21 @@ export async function deleteSubtask(subtaskId: number, userId: number) {
   await db.delete(subtasks).where(and(eq(subtasks.id, subtaskId), eq(subtasks.userId, userId)));
 }
 
-export async function reorderSubtasks(taskId: number, userId: number, orderedIds: number[]) {
+export async function reorderSubtasks(taskId: number, userId: number, orderedIds: number[], parentSubtaskId?: number | null) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
   for (let i = 0; i < orderedIds.length; i++) {
+    const conditions = [eq(subtasks.id, orderedIds[i]), eq(subtasks.userId, userId), eq(subtasks.taskId, taskId)];
+    if (parentSubtaskId) {
+      conditions.push(eq(subtasks.parentSubtaskId, parentSubtaskId));
+    } else {
+      conditions.push(isNull(subtasks.parentSubtaskId));
+    }
     await db
       .update(subtasks)
       .set({ sortOrder: i })
-      .where(and(eq(subtasks.id, orderedIds[i]), eq(subtasks.userId, userId), eq(subtasks.taskId, taskId)));
+      .where(and(...conditions));
   }
 }
 

@@ -37,6 +37,7 @@ interface TaskListProps {
       completed: boolean;
       sortOrder: number;
       dueDate: number | null;
+      parentSubtaskId: number | null;
     }>;
   }>;
   onCelebrate: () => void;

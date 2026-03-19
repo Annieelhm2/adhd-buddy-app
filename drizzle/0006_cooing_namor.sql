@@ -1,0 +1,1 @@
+ALTER TABLE `subtasks` ADD `parentSubtaskId` int;

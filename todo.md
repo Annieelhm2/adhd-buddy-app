@@ -73,3 +73,9 @@
 - [x] Restart nudge timer on activity (clicks, typing) after user dismisses — NOT on navigation
 - [x] Fix: Action nudge banner not showing up at all (restructured routing so ActionNudgeProvider doesn't remount)
 - [x] Add toggle to hide/show completed tasks on the Tasks page
+- [x] Database schema: Add parentSubtaskId column to subtasks table for nested hierarchy
+- [x] Server: Update subtask tRPC procedures to support parent-child relationships
+- [x] Frontend: Build recursive SubtaskItem component for infinite nesting
+- [x] Frontend: Update Tasks page to render nested subtask hierarchy
+- [x] Frontend: Add "Add nested subtask" UI within each subtask
+- [x] Tests: Write vitest tests for nested subtask operations

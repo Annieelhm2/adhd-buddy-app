@@ -12,6 +12,7 @@ import {
   reorderTasks,
   getSubtasksByTask,
   getSubtasksByUser,
+  getNestedSubtasksByParent,
   createSubtask,
   updateSubtask,
   deleteSubtask,
@@ -160,11 +161,18 @@ export const appRouter = router({
   }),
 
   subtasks: router({
+    getNestedSubtasks: protectedProcedure
+      .input(z.object({ parentSubtaskId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        return getNestedSubtasksByParent(input.parentSubtaskId, ctx.user.id);
+      }),
+
     create: protectedProcedure
       .input(z.object({
         taskId: z.number(),
         title: z.string().min(1).max(500),
         dueDate: z.number().nullable().optional(),
+        parentSubtaskId: z.number().nullable().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         return createSubtask({
@@ -172,6 +180,7 @@ export const appRouter = router({
           userId: ctx.user.id,
           title: input.title,
           dueDate: input.dueDate,
+          parentSubtaskId: input.parentSubtaskId,
         });
       }),
 
@@ -218,9 +227,10 @@ export const appRouter = router({
       .input(z.object({
         taskId: z.number(),
         orderedIds: z.array(z.number()),
+        parentSubtaskId: z.number().nullable().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
-        await reorderSubtasks(input.taskId, ctx.user.id, input.orderedIds);
+        await reorderSubtasks(input.taskId, ctx.user.id, input.orderedIds, input.parentSubtaskId);
         return { success: true };
       }),
   }),

@@ -40,11 +40,13 @@ export type InsertTask = typeof tasks.$inferInsert;
 
 /**
  * Subtasks table - child tasks within a parent task.
+ * Supports infinite nesting: a subtask can have a parentSubtaskId to create nested hierarchies.
  */
 export const subtasks = mysqlTable("subtasks", {
   id: int("id").autoincrement().primaryKey(),
   taskId: int("taskId").notNull(),
   userId: int("userId").notNull(),
+  parentSubtaskId: int("parentSubtaskId"), // null for top-level subtasks, points to parent subtask for nested ones
   title: varchar("title", { length: 500 }).notNull(),
   completed: boolean("completed").notNull().default(false),
   sortOrder: int("sortOrder").notNull().default(0),

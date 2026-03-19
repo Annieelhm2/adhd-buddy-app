@@ -43,6 +43,13 @@
       "when": 1771459333360,
       "tag": "0005_tricky_darkhawk",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1773891388713,
+      "tag": "0006_cooing_namor",
+      "breakpoints": true
     }
   ]
 }
