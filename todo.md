@@ -79,3 +79,6 @@
 - [x] Frontend: Update Tasks page to render nested subtask hierarchy
 - [x] Frontend: Add "Add nested subtask" UI within each subtask
 - [x] Tests: Write vitest tests for nested subtask operations
+- [x] Limit completed tasks display to last 10 by default
+- [x] Add "View More" button to expand full completed tasks list
+- [x] Apply pagination separately for Must Do and Could Do completed tasks

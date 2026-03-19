@@ -56,7 +56,10 @@ export function TaskList({
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [showAdd, setShowAdd] = useState(false);
   const [hideCompleted, setHideCompleted] = useState(false);
+  const [showAllCompleted, setShowAllCompleted] = useState(false);
   const utils = trpc.useUtils();
+
+  const COMPLETED_TASKS_LIMIT = 10;
 
   const createTask = trpc.tasks.create.useMutation({
     onSuccess: () => {
@@ -118,6 +121,8 @@ export function TaskList({
 
   const pendingTasks = tasks.filter((t) => !t.completed);
   const completedTasks = tasks.filter((t) => t.completed);
+  const displayedCompletedTasks = showAllCompleted ? completedTasks : completedTasks.slice(-COMPLETED_TASKS_LIMIT);
+  const hasMoreCompleted = completedTasks.length > COMPLETED_TASKS_LIMIT;
 
   return (
     <div className="space-y-3">
@@ -260,7 +265,7 @@ export function TaskList({
                     className="overflow-hidden"
                   >
                     <div className="space-y-2 sm:space-y-1.5">
-                      {completedTasks.map((task) => (
+                      {displayedCompletedTasks.map((task) => (
                         <TaskItem
                           key={task.id}
                           task={task}
@@ -268,6 +273,22 @@ export function TaskList({
                           onCelebrate={onCelebrate}
                         />
                       ))}
+                      {hasMoreCompleted && !showAllCompleted && (
+                        <button
+                          onClick={() => setShowAllCompleted(true)}
+                          className="w-full text-center py-2 text-sm sm:text-xs text-muted-foreground hover:text-foreground transition-colors border border-dashed border-muted-foreground/30 rounded-md hover:border-muted-foreground/50"
+                        >
+                          View More ({completedTasks.length - COMPLETED_TASKS_LIMIT} more)
+                        </button>
+                      )}
+                      {showAllCompleted && hasMoreCompleted && (
+                        <button
+                          onClick={() => setShowAllCompleted(false)}
+                          className="w-full text-center py-2 text-sm sm:text-xs text-muted-foreground hover:text-foreground transition-colors border border-dashed border-muted-foreground/30 rounded-md hover:border-muted-foreground/50"
+                        >
+                          Show Less
+                        </button>
+                      )}
                     </div>
                   </motion.div>
                 )}
