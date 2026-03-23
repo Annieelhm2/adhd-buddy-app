@@ -59,7 +59,7 @@ export function TaskList({
   const [showAllCompleted, setShowAllCompleted] = useState(false);
   const utils = trpc.useUtils();
 
-  const COMPLETED_TASKS_LIMIT = 10;
+  const COMPLETED_TASKS_LIMIT = 3;
 
   const createTask = trpc.tasks.create.useMutation({
     onSuccess: () => {
